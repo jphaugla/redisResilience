@@ -1,0 +1,27 @@
+version: '3'
+services:
+
+  redis1:
+    image: "arm64v8/redis:latest"
+    container_name: redis1
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data1:/data
+
+  redis2:
+    image: "arm64v8/redis:latest"
+    container_name: redis2
+    ports:
+      - "6380:6380"
+    command: --port 6380
+    volumes:
+      - ./redis_data2:/data
+
+  insight:
+    image: "redislabs/redisinsight:latest"
+    container_name: insight
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./redisinsight:/db
