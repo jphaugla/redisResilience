@@ -1,8 +1,8 @@
 package com.jphaugla.service;
 
 import com.jphaugla.domain.*;
-import com.jphaugla.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 
@@ -23,19 +23,11 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class AsyncService {
 
-    @Autowired
-    private AccountRepository accountRepository;
-    @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private TransactionRepository transactionRepository;
-    @Autowired
-    private PhoneRepository phoneRepository;
-    @Autowired
-    private EmailRepository emailRepository;
+
+    @Qualifier("strRedisTemplate1")
     @Autowired
     private StringRedisTemplate redisTemplate;
-
+/*
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeAllTransaction(List<Transaction> transactions) {
         transactionRepository.saveAll(transactions);
@@ -141,4 +133,6 @@ public class AsyncService {
         return CompletableFuture.completedFuture(0);
     }
 
+
+ */
 }

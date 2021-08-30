@@ -19,11 +19,14 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import org.springframework.stereotype.Service;
@@ -35,24 +38,15 @@ public class BankService {
 	private static BankService bankService = new BankService();
 	@Autowired
 	private AsyncService asyncService;
+
 	@Autowired
-	private CustomerRepository customerRepository;
+	@Qualifier("redisTemplate1")
+	private RedisTemplate redisTemplate1;
+
 	@Autowired
-	private AccountRepository accountRepository;
-	@Autowired
-	private PhoneRepository phoneRepository;
-	@Autowired
-	private EmailRepository emailRepository;
-	@Autowired
-	private MerchantRepository merchantRepository;
-	@Autowired
-	private TransactionReturnRepository transactionReturnRepository;
-	@Autowired
-	private TransactionRepository transactionRepository;
-	@Autowired
-	private StringRedisTemplate redisTemplate;
-	@Autowired
-	ObjectMapper objectMapper;
+	@Qualifier("redisTemplate2")
+	private RedisTemplate redisTemplate2;
+
 
 	@Value("${app.transactionSearchIndexName}")
 	private String transactionSearchIndexName;
@@ -62,6 +56,8 @@ public class BankService {
 	private String merchantSearchIndexName;
 	@Value("${app.accountSearchIndexName}")
 	private String accountSearchIndexName;
+	@Autowired
+	private CustomerRepository customerRepository;
 	private static final Logger logger = LoggerFactory.getLogger(BankService.class);
 	private static final String BREAKER_REDIS="breakerRedis";
 
@@ -73,11 +69,36 @@ public class BankService {
 	}
 
 	public Optional<Customer> getCustomer(String customerId){
-		
-		return customerRepository.findById(customerId);
+		logger.info("in getCustomer with ID " + customerId);
+		String customerKey = "Customer:" + customerId;
+		Customer returnCustomer = customerRepository.get(customerKey);
+		logger.info("returned customer " + returnCustomer);
+		return Optional.of(returnCustomer);
+	}
+	public void saveSampleCustomer() throws ParseException, RedisCommandExecutionException {
+		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.28");
+		Date last_update = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.29");
+		String cust = "cust0001";
+		Email home_email = new Email("jasonhaugland@gmail.com", "home", cust);
+		Email work_email = new Email("jason.haugland@redislabs.com", "work", cust);
+		PhoneNumber cell_phone = new PhoneNumber("612-408-4394", "cell", cust);
+		/* emailRepository.save(home_email);
+		emailRepository.save(work_email);
+		phoneRepository.save(cell_phone);
+		 */
+		Customer customer = new Customer( cust, "4744 17th av s", "",
+				"Home", "N", "Minneapolis", "00",
+				"jph", create_date.getTime(), "IDR",
+				"A", "BANK", "1949.01.23",
+				"Ralph", "Ralph Waldo Emerson", "M",
+				"887778989", "SSN", "Emerson", last_update.getTime(),
+				"jph", "Waldo",  "MR",
+				"help", "MN", "55444", "55444-3322"
+		);
+		customerRepository.create(customer);
 	}
 
-	public Optional<PhoneNumber> getPhoneNumber(String phoneString) {
+	/* public Optional<PhoneNumber> getPhoneNumber(String phoneString) {
 		return phoneRepository.findById(phoneString);
 	}
 
@@ -212,6 +233,9 @@ public class BankService {
 				"ccnumber666655", create_date,
 				null, null, null, null);
 		accountRepository.save(account);
+	}
+	public void saveAccount(Account account) {
+		HashOperations<String, String, String> opsForHash = stringRedisTemplate.ops
 	}
 	public void saveSampleTransaction() throws ParseException, RedisCommandExecutionException {
 		Date settle_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.28");
@@ -365,6 +389,8 @@ public class BankService {
 				   custTimer.getTimeTakenSeconds() + " secs");
 		return allAccounts;
 	}
+
+	 */
 
 	private void sleep(int i) {
 		try {

@@ -10,6 +10,12 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# redis files
+redis*/
+
+# target directory
+target/
+
 # Package Files #
 *.jar
 *.war

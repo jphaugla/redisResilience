@@ -23,12 +23,8 @@ public class BankingController {
 	private BankService bankService = BankService.getInstance();
 
 	private static final Logger logger = LoggerFactory.getLogger(BankingController.class);
-	// customer
-	@RequestMapping("/save_customer")
-	public String saveCustomer() throws ParseException {
-		bankService.saveSampleCustomer();
-		return "Done";
-	}
+	/*
+
 	//  account
 	@RequestMapping("/save_account")
 	public String saveAccount() throws ParseException {
@@ -64,11 +60,6 @@ public class BankingController {
 
 		return "Done";
 	}
-	@GetMapping("/customer")
-
-	public Optional<Customer> getCustomer(@RequestParam String customerId) {
-		return bankService.getCustomer(customerId);
-	}
 
 	@GetMapping("/customerByPhone")
 
@@ -97,5 +88,19 @@ public class BankingController {
 		Transaction transaction = bankService.getTransaction(transactionID);
 		return transaction;
 	}
+
+	 */
+	@GetMapping("/customer")
+
+	public Optional<Customer> getCustomer(@RequestParam String customerId) {
+		return bankService.getCustomer(customerId);
+	}
+	// customer
+	@RequestMapping("/save_customer")
+	public String saveCustomer() throws ParseException {
+		bankService.saveSampleCustomer();
+		return "Done";
+	}
+
 
 }

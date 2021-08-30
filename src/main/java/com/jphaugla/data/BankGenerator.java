@@ -46,8 +46,8 @@ public class BankGenerator {
         customer.setLastUpdatedBy("Java Test");
         customer.setCustomerType("Retail");
 
-		customer.setCreatedDatetime(currentDate);
-		customer.setLastUpdated(currentDate);
+		customer.setCreatedDatetime(currentDate.getTime());
+		customer.setLastUpdated(currentDate.getTime());
 
 		customer.setCustomerOriginSystem("RCIF");
 		customer.setCustomerStatus("A");
@@ -90,16 +90,6 @@ public class BankGenerator {
 		customer.setMiddleName(middleName);
 		customer.setFullName(firstName + " " + middleName + " " + lastName);
 
-		Email home_email = new Email(customerId + "@gmail.com","home", customerId);
-		customer.setHomeEmail(home_email);
-		Email work_email = new Email(customerId + "@BigCompany.com","work", customerId);
-		customer.setWorkEmail(work_email);
-		PhoneNumber home_phone = new PhoneNumber(customerId + "h", "home", customerId);
-		customer.setHomePhone(home_phone);
-		PhoneNumber cell_phone = new PhoneNumber(customerId + "c", "cell", customerId);
-		customer.setCellPhone(cell_phone);
-		PhoneNumber workPhone = new PhoneNumber(customerId + "w", "work", customerId);
-		customer.setWorkPhone(workPhone);
 		return customer;
 	}
 	public static List<Merchant> createMerchantList () {
