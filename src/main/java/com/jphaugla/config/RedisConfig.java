@@ -13,12 +13,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.core.registry.RegistryEventConsumer;
-import io.github.resilience4j.core.registry.EntryAddedEvent;
-import io.github.resilience4j.core.registry.EntryRemovedEvent;
-import io.github.resilience4j.core.registry.EntryReplacedEvent;
-
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -49,28 +43,6 @@ public class RedisConfig {
     @Autowired
     private Environment env;
 
-
-    @Bean
-    public RegistryEventConsumer<CircuitBreaker> myRegistryEventConsumer() {
-
-        return new RegistryEventConsumer<CircuitBreaker>() {
-            @Override
-            public void onEntryAddedEvent(EntryAddedEvent<CircuitBreaker> entryAddedEvent) {
-                entryAddedEvent.getAddedEntry().getEventPublisher().onEvent(event -> logger.info(event.toString()));
-            }
-
-            @Override
-            public void onEntryRemovedEvent(EntryRemovedEvent<CircuitBreaker> entryRemoveEvent) {
-
-            }
-
-            @Override
-            public void onEntryReplacedEvent(EntryReplacedEvent<CircuitBreaker> entryReplacedEvent) {
-
-            }
-        };
-    }
-
     @Bean(name = "redisConnectionFactory1")
     @Primary
     public LettuceConnectionFactory redisConnectionFactory1() {
@@ -89,13 +61,6 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
-      /*  redisTemplate.setKeySerializer(new StringRedisSerializer());
-       redisTemplate.setValueSerializer(new GenericToStringSerializer<Long>(Long.class));
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-                redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
-        redisTemplate.afterPropertiesSet();
-
-       */
         return redisTemplate;
     }
     @Bean
