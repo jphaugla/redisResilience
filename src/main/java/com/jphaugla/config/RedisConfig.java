@@ -14,6 +14,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -22,6 +23,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.context.annotation.Bean;
+
+import java.time.Duration;
 import java.util.concurrent.Executor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,15 +38,19 @@ public class RedisConfig {
 
     @Autowired
     private Environment env;
+    private @Value("${spring.redis.timeout}")
+    Duration redisCommandTimeout;
 
     @Bean(name = "redisConnectionFactory1")
     @Primary
     public LettuceConnectionFactory redisConnectionFactory1() {
-        RedisStandaloneConfiguration redisConf = new RedisStandaloneConfiguration();
-        redisConf.setHostName(env.getProperty("spring.redis.host"));
-        redisConf.setPort(Integer.parseInt(env.getProperty("spring.redis.port")));
-        redisConf.setPassword(RedisPassword.of(env.getProperty("spring.redis.password")));
-        return new LettuceConnectionFactory(redisConf);
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .commandTimeout(redisCommandTimeout).build();
+        RedisStandaloneConfiguration redisServerConf = new RedisStandaloneConfiguration();
+        redisServerConf.setHostName(env.getProperty("spring.redis.host"));
+        redisServerConf.setPort(Integer.parseInt(env.getProperty("spring.redis.port")));
+        redisServerConf.setPassword(RedisPassword.of(env.getProperty("spring.redis.password")));
+        return new LettuceConnectionFactory(redisServerConf,clientConfig);
     }
 
     @Bean
@@ -68,18 +75,24 @@ public class RedisConfig {
 
     @Bean(name = "redisConnectionFactory2")
     public LettuceConnectionFactory redisConnectionFactory2() {
-        RedisStandaloneConfiguration redisConf = new RedisStandaloneConfiguration();
-        redisConf.setHostName(env.getProperty("spring.redis.host2"));
-        redisConf.setPort(Integer.parseInt(env.getProperty("spring.redis.port2")));
-        redisConf.setPassword(RedisPassword.of(env.getProperty("spring.redis.password2")));
-        return new LettuceConnectionFactory(redisConf);
+        RedisStandaloneConfiguration redisServerConf = new RedisStandaloneConfiguration();
+        redisServerConf.setHostName(env.getProperty("spring.redis.host2"));
+        redisServerConf.setPort(Integer.parseInt(env.getProperty("spring.redis.port2")));
+        redisServerConf.setPassword(RedisPassword.of(env.getProperty("spring.redis.password2")));
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .commandTimeout(redisCommandTimeout).build();
+        return new LettuceConnectionFactory(redisServerConf,clientConfig);
     }
 
     @Bean
     public RedisTemplate<Object, Object> redisTemplate2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory);
-        return template;
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
     }
     @Bean
     public StringRedisTemplate strRedisTemplate2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {

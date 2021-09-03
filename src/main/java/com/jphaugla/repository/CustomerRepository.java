@@ -2,7 +2,9 @@ package com.jphaugla.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jphaugla.domain.Customer;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.utils.CircuitBreakerUtil;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,36 +35,48 @@ public class CustomerRepository  {
 	@Qualifier("redisTemplate2")
 	private RedisTemplate redisTemplate2;
 
-    private RedisTemplate redisToUse = redisTemplate1;
+    private RedisTemplate redisToUse;
 
 	public CustomerRepository(@Qualifier("redisTemplate1") RedisTemplate redisTemplate) {
-		this.hashOperations = redisTemplate.opsForHash();
+		redisToUse = redisTemplate1;
+		logger.info("CustomerRepository constructor");
 	}
 
+	// @Retry(name = "backendA", fallbackMethod = "retryFallBack")
 	@CircuitBreaker(name = "backendA", fallbackMethod = "cbFallBack")
-	public String create(Customer customer) {
+	public String create(Customer customer)  {
 		if(customer.getCreatedDatetime() == null ) {
 			Long currentTimeMillis = System.currentTimeMillis();
 			customer.setCreatedDatetime(currentTimeMillis);
 			customer.setLastUpdated(currentTimeMillis);
 		}
 		Map<Object, Object> custHash = mapper.convertValue(customer, Map.class);
+		if (redisToUse == null) redisToUse = redisTemplate1;
 		redisToUse.opsForHash().putAll("Customer:"+ customer.getCustomerId(), custHash);
 		logger.info(String.format("Customer with ID %s saved", customer.getCustomerId()));
 		return "Success\n";
 	}
 
-	public String cbFallBack(Customer customer, Throwable t) {
-		logger.info("cbFallBack call with exception " + t.getMessage());
-		// toggle the redis template to use to failover
-		if (redisToUse == redisTemplate1) {
-			redisToUse = redisTemplate2;
-			logger.info("Failed over from redistemplate1 to redistemplate2 ");
-		} else {
-			redisToUse = redisTemplate1;
-			logger.info("Failed over from redistemplate2 to redistemplate1 ");
+	public String cbFallBack(Customer customer, Exception exception) {
+		//  this gets called back with everyexception but only do the swith
+		//  when it is called by the called not permitted exception (circuit breaker open)
+		logger.info("cbFallBack call with exception " + exception.getMessage());
+		if (exception instanceof CallNotPermittedException) {
+			// toggle the redis template to use to failover
+			if (redisToUse == redisTemplate1) {
+				redisToUse = redisTemplate2;
+				logger.info("Failed over from redistemplate1 to redistemplate2 ");
+			} else {
+				redisToUse = redisTemplate1;
+				logger.info("Failed over from redistemplate2 to redistemplate1 ");
+			}
 		}
-		return String.format("Fallback Execution for Circuit Breaker. Error Message: %s\n", t.getMessage());
+		return String.format("Fallback Execution for Circuit Breaker. Error Message: %s\n", exception.getMessage());
+	}
+
+	public String retryFallBack(Customer customer, Exception exception) {
+		logger.info("retryFallBack call with exception " + exception.getMessage());
+		return String.format("Fallback Execution for Retry. Error Message: %s\n", exception.getMessage());
 	}
 
 	public Customer get(String customerId) {

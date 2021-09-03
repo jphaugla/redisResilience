@@ -6,6 +6,7 @@ logging:
             springframework: INFO
     pattern:
         console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+
 resilience4j:
     circuitbreaker:
         configs:
@@ -24,6 +25,7 @@ resilience4j:
                 permittedNumberOfCallsInHalfOpenState: 30
                 slidingWindowSize: 100
                 waitDurationInOpenState: 45s
+        circuitBreakerAspectOrder: 1
         instances:
             backendA:
                 baseConfig: default
@@ -39,13 +41,14 @@ resilience4j:
     retry:
         configs:
             default:
-                maxRetryAttempts: 4
+                maxRetryAttempts: 2
                 waitDuration: 1000
         instances:
             backendA:
                 baseConfig: default
             backendB:
                 baseConfig: default
+        retryAspectOrder: 2
 spring:
     autoconfigure:
         exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
@@ -54,3 +57,4 @@ spring:
         host2: localhost
         port: 6379
         port2: 6380
+        timeout: 1000ms
