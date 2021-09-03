@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import org.springframework.http.server.DelegatingServerHttpResponse;
 import org.springframework.stereotype.Repository;
 import java.util.Map;
 
@@ -28,6 +29,11 @@ public class CustomerRepository  {
 	@Qualifier("redisTemplate1")
 	private RedisTemplate redisTemplate1;
 
+	@Autowired
+	@Qualifier("redisTemplate2")
+	private RedisTemplate redisTemplate2;
+
+    private RedisTemplate redisToUse = redisTemplate1;
 
 	public CustomerRepository(@Qualifier("redisTemplate1") RedisTemplate redisTemplate) {
 		this.hashOperations = redisTemplate.opsForHash();
@@ -41,13 +47,21 @@ public class CustomerRepository  {
 			customer.setLastUpdated(currentTimeMillis);
 		}
 		Map<Object, Object> custHash = mapper.convertValue(customer, Map.class);
-		redisTemplate1.opsForHash().putAll("Customer:"+ customer.getCustomerId(), custHash);
+		redisToUse.opsForHash().putAll("Customer:"+ customer.getCustomerId(), custHash);
 		logger.info(String.format("Customer with ID %s saved", customer.getCustomerId()));
 		return "Success\n";
 	}
 
 	public String cbFallBack(Customer customer, Throwable t) {
 		logger.info("cbFallBack call with exception " + t.getMessage());
+		// toggle the redis template to use to failover
+		if (redisToUse == redisTemplate1) {
+			redisToUse = redisTemplate2;
+			logger.info("Failed over from redistemplate1 to redistemplate2 ");
+		} else {
+			redisToUse = redisTemplate1;
+			logger.info("Failed over from redistemplate2 to redistemplate1 ");
+		}
 		return String.format("Fallback Execution for Circuit Breaker. Error Message: %s\n", t.getMessage());
 	}
 
