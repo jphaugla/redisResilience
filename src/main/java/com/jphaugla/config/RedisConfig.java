@@ -1,9 +1,5 @@
 package com.jphaugla.config;
 
-import com.jphaugla.service.BankService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,12 +11,10 @@ import org.springframework.context.annotation.Configuration;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -31,7 +25,6 @@ import org.springframework.context.annotation.Bean;
 import java.util.concurrent.Executor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import com.jphaugla.domain.Customer;
 
 @Configuration
 @EnableConfigurationProperties(RedisProperties.class)
@@ -39,7 +32,7 @@ import com.jphaugla.domain.Customer;
 
 @ComponentScan("com.jphaugla")
 public class RedisConfig {
-    private static final Logger logger = LoggerFactory.getLogger(BankService.class);
+
     @Autowired
     private Environment env;
 
@@ -54,8 +47,9 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Object, Customer> redisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+    @Primary
+    public RedisTemplate<Object, Object> redisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
@@ -63,6 +57,7 @@ public class RedisConfig {
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
+
     @Bean
     @Primary
     public StringRedisTemplate strRedisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {

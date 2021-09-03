@@ -47,15 +47,6 @@ public class BankService {
 	@Qualifier("redisTemplate2")
 	private RedisTemplate redisTemplate2;
 
-
-	@Value("${app.transactionSearchIndexName}")
-	private String transactionSearchIndexName;
-	@Value("${app.customerSearchIndexName}")
-	private String customerSearchIndexName;
-	@Value("${app.merchantSearchIndexName}")
-	private String merchantSearchIndexName;
-	@Value("${app.accountSearchIndexName}")
-	private String accountSearchIndexName;
 	@Autowired
 	private CustomerRepository customerRepository;
 	private static final Logger logger = LoggerFactory.getLogger(BankService.class);
@@ -398,5 +389,10 @@ public class BankService {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void postCustomer(Customer customer) {
+		logger.info("in postCustomer with Customer =" + customer);
+		customerRepository.create(customer);
 	}
 }

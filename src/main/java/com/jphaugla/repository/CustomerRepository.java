@@ -2,20 +2,17 @@ package com.jphaugla.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jphaugla.domain.Customer;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
+
 import org.springframework.stereotype.Repository;
-
-
-import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -31,14 +28,27 @@ public class CustomerRepository  {
 	@Qualifier("redisTemplate1")
 	private RedisTemplate redisTemplate1;
 
+
 	public CustomerRepository(@Qualifier("redisTemplate1") RedisTemplate redisTemplate) {
 		this.hashOperations = redisTemplate.opsForHash();
 	}
 
-	public void create(Customer customer) {
+	@CircuitBreaker(name = "backendA", fallbackMethod = "cbFallBack")
+	public String create(Customer customer) {
+		if(customer.getCreatedDatetime() == null ) {
+			Long currentTimeMillis = System.currentTimeMillis();
+			customer.setCreatedDatetime(currentTimeMillis);
+			customer.setLastUpdated(currentTimeMillis);
+		}
 		Map<Object, Object> custHash = mapper.convertValue(customer, Map.class);
 		redisTemplate1.opsForHash().putAll("Customer:"+ customer.getCustomerId(), custHash);
 		logger.info(String.format("Customer with ID %s saved", customer.getCustomerId()));
+		return "Success\n";
+	}
+
+	public String cbFallBack(Customer customer, Throwable t) {
+		logger.info("cbFallBack call with exception " + t.getMessage());
+		return String.format("Fallback Execution for Circuit Breaker. Error Message: %s\n", t.getMessage());
 	}
 
 	public Customer get(String customerId) {

@@ -102,5 +102,11 @@ public class BankingController {
 		return "Done";
 	}
 
+	@PostMapping(value = "/postCustomer", consumes = "application/json", produces = "application/json")
+	public String postCustomer(@RequestBody Customer customer ) throws ParseException {
+		bankService.postCustomer(customer);
+		return "Done\n";
+	}
+
 
 }
