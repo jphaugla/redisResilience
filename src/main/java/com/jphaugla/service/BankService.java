@@ -40,15 +40,19 @@ public class BankService {
 	private AsyncService asyncService;
 
 	@Autowired
-	@Qualifier("redisTemplate1")
-	private RedisTemplate redisTemplate1;
-
-	@Autowired
-	@Qualifier("redisTemplate2")
-	private RedisTemplate redisTemplate2;
-
-	@Autowired
 	private CustomerRepository customerRepository;
+
+	@Autowired
+	private RedisTemplateRepository redisTemplateRepository;
+
+	private @Value("${spring.redis.testkey}")
+	String testKey;
+
+	private @Value("${spring.redis.connectionLoopInterval}")
+	int loopInterval;
+	private @Value("${spring.redis.waitafterfailover}")
+	int waitInOpen;
+
 	private static final Logger logger = LoggerFactory.getLogger(BankService.class);
 	private static final String BREAKER_REDIS="breakerRedis";
 
@@ -60,11 +64,28 @@ public class BankService {
 	}
 
 	public Optional<Customer> getCustomer(String customerId){
-		logger.info("in getCustomer with ID " + customerId);
-		String customerKey = "Customer:" + customerId;
-		Customer returnCustomer = customerRepository.get(customerKey);
+		logger.info("in bankservice.getCustomer with ID " + customerId);
+		Customer returnCustomer = customerRepository.get(customerId);
 		logger.info("returned customer " + returnCustomer);
 		return Optional.of(returnCustomer);
+	}
+	public void startRedisWrite() throws InterruptedException {
+		int loopIndex=0;
+		logger.info("in startRedisWrite before");
+		String testValue;
+		do {
+			testValue=Integer.toString(loopIndex);
+			// logger.info("in write loop with idx " + testValue);
+			Boolean failedOver = redisTemplateRepository.testTheWrite(testKey, testValue);
+			logger.info("after the write with failedover " + failedOver);
+			loopIndex += 1;
+			int waitInterval = loopInterval;
+			if (failedOver) {
+				logger.info("changing waitInterval to " + waitInOpen);
+				waitInterval = waitInOpen;
+			}
+			sleep(waitInterval);
+		} while (true);
 	}
 	public void saveSampleCustomer() throws ParseException, RedisCommandExecutionException {
 		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.28");

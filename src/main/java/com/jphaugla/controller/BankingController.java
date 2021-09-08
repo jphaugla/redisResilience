@@ -108,5 +108,10 @@ public class BankingController {
 		return "Done\n";
 	}
 
+	@GetMapping("/startConnect")
+	public void startLoop() throws InterruptedException {
+		bankService.startRedisWrite();
+	}
+
 
 }

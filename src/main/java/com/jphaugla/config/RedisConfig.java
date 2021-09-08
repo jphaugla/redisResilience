@@ -1,5 +1,8 @@
 package com.jphaugla.config;
 
+import com.jphaugla.domain.Customer;
+import com.jphaugla.repository.RedisTemplateRepository;
+import com.jphaugla.service.ChooseRedis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,13 +58,24 @@ public class RedisConfig {
 
     @Bean
     @Primary
-    public RedisTemplate<Object, Object> redisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Customer> redisTemplateW1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<Object, Customer> redisTemplateR1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        //  redisTemplate.setKeySerializer(new StringRedisSerializer());
+        //   redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+        //  redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
@@ -85,13 +99,24 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Object, Object> redisTemplate2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Customer> redisTemplateW2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<Object, Customer> redisTemplateR2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+    //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+    //    redisTemplate.setKeySerializer(new StringRedisSerializer());
+    //    redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+    //    redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
     @Bean
@@ -111,4 +136,18 @@ public class RedisConfig {
         executor.setThreadNamePrefix("Async-");
         return executor;
     }
+    @Bean
+    public ChooseRedis chooseRedis() {
+        return new ChooseRedis();
+    }
+    @Bean
+    public RedisTemplate[] redisTemplateWriteArray(@Qualifier("redisTemplateW1") RedisTemplate redisTemplate1, @Qualifier("redisTemplateW2")RedisTemplate redisTemplate2) {
+        RedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
+        return (templateArray);
+    };
+    @Bean
+    public RedisTemplate[] redisTemplateReadArray(@Qualifier("redisTemplateR1") RedisTemplate redisTemplate1, @Qualifier("redisTemplateR2")RedisTemplate redisTemplate2) {
+        RedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
+        return (templateArray);
+    };
 }

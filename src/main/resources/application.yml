@@ -18,13 +18,13 @@ resilience4j:
                 permittedNumberOfCallsInHalfOpenState: 3
                 registerHealthIndicator: true
                 slidingWindowSize: 10
-                waitDurationInOpenState: 45s
+                waitDurationInOpenState: 3s
             shared:
                 eventConsumerBufferSize: 10
                 failureRateThreshold: 50
                 permittedNumberOfCallsInHalfOpenState: 30
                 slidingWindowSize: 100
-                waitDurationInOpenState: 45s
+                waitDurationInOpenState: 4s
         circuitBreakerAspectOrder: 1
         instances:
             backendA:
@@ -58,3 +58,6 @@ spring:
         port: 6379
         port2: 6380
         timeout: 1000ms
+        testkey: testKey
+        connectionLoopInterval: 500
+        waitafterfailover: 10000
