@@ -43,8 +43,8 @@ public class BankGenerator {
 
 		customer.setAddressLine1("Line1-" + customerId);
 		customer.setCreatedBy("Java Test");
-        customer.setLastUpdatedBy("Java Test");
-        customer.setCustomerType("Retail");
+        	customer.setLastUpdatedBy("Java Test");
+        	customer.setCustomerType("Retail");
 
 		customer.setCreatedDatetime(currentDate.getTime());
 		customer.setLastUpdated(currentDate.getTime());
@@ -52,8 +52,8 @@ public class BankGenerator {
 		customer.setCustomerOriginSystem("RCIF");
 		customer.setCustomerStatus("A");
 		customer.setCountryCode("00");
-        customer.setGovernmentId("TIN");
-        customer.setGovernmentIdType(customerIdInt.substring(1));
+        	customer.setGovernmentId("TIN");
+        	customer.setGovernmentIdType(customerIdInt.substring(1));
 
 		int lastDigit = Integer.parseInt(customerIdInt.substring(6));
 		if (lastDigit>7) {

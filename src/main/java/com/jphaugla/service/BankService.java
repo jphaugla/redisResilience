@@ -71,13 +71,13 @@ public class BankService {
 	}
 	public void startRedisWrite() throws InterruptedException {
 		int loopIndex=0;
-		logger.info("in startRedisWrite before");
+		logger.info("in startRedisWrite before loop loopInterval is " + loopInterval + " waitInOpen is " + waitInOpen);
 		String testValue;
 		do {
 			testValue=Integer.toString(loopIndex);
 			// logger.info("in write loop with idx " + testValue);
 			Boolean failedOver = redisTemplateRepository.testTheWrite(testKey, testValue);
-			logger.info("after the write with failedover " + failedOver);
+			// logger.info("after the write with failedover " + failedOver);
 			loopIndex += 1;
 			int waitInterval = loopInterval;
 			if (failedOver) {

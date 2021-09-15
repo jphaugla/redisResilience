@@ -58,24 +58,24 @@ public class RedisConfig {
 
     @Bean
     @Primary
-    public RedisTemplate<Object, Customer> redisTemplateW1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Object> redisTemplateW1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+       // redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+       //  redisTemplate.setKeySerializer(new StringRedisSerializer());
+       //  redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
     @Bean
-    public RedisTemplate<Object, Customer> redisTemplateR1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Object> redisTemplateR1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         //  redisTemplate.setKeySerializer(new StringRedisSerializer());
         //   redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
-        //  redisTemplate.afterPropertiesSet();
+        redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
@@ -99,19 +99,19 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Object, Customer> redisTemplateW2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Object> redisTemplateW2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+        // redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        // redisTemplate.setKeySerializer(new StringRedisSerializer());
+        // redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
     @Bean
-    public RedisTemplate<Object, Customer> redisTemplateR2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Customer> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<Object, Object> redisTemplateR2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
     //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
     //    redisTemplate.setKeySerializer(new StringRedisSerializer());

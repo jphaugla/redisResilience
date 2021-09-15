@@ -7,48 +7,35 @@ logging:
     pattern:
         console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
 
-resilience4j:
-    circuitbreaker:
-        configs:
-            default:
-                automaticTransitionFromOpenToHalfOpenEnabled: true
-                eventConsumerBufferSize: 10
-                failureRateThreshold: 50
-                minimumNumberOfCalls: 5
-                permittedNumberOfCallsInHalfOpenState: 3
-                registerHealthIndicator: true
-                slidingWindowSize: 10
-                waitDurationInOpenState: 3s
-            shared:
-                eventConsumerBufferSize: 10
-                failureRateThreshold: 50
-                permittedNumberOfCallsInHalfOpenState: 30
-                slidingWindowSize: 100
-                waitDurationInOpenState: 4s
-        circuitBreakerAspectOrder: 1
-        instances:
-            backendA:
-                baseConfig: default
-            backendB:
-                automaticTransitionFromOpenToHalfOpenEnabled: true
-                eventConsumerBufferSize: 10
-                failureRateThreshold: 50
-                minimumNumberOfCalls: 10
-                permittedNumberOfCallsInHalfOpenState: 3
-                registerHealthIndicator: true
-                slidingWindowSize: 10
-                waitDurationInOpenState: 45s
-    retry:
-        configs:
-            default:
-                maxRetryAttempts: 2
-                waitDuration: 1000
-        instances:
-            backendA:
-                baseConfig: default
-            backendB:
-                baseConfig: default
-        retryAspectOrder: 2
+resilience4j.circuitbreaker:
+    configs:
+        default:
+            automaticTransitionFromOpenToHalfOpenEnabled: true
+            eventConsumerBufferSize: 10
+            failureRateThreshold: 50
+            minimumNumberOfCalls: 5
+            permittedNumberOfCallsInHalfOpenState: 3
+            registerHealthIndicator: true
+            slidingWindowSize: 10
+            waitDurationInOpenState: 3s
+        shared:
+            eventConsumerBufferSize: 10
+            failureRateThreshold: 50
+            permittedNumberOfCallsInHalfOpenState: 30
+            slidingWindowSize: 100
+            waitDurationInOpenState: 4s
+    instances:
+        backendA:
+            baseConfig: default
+        backendB:
+            automaticTransitionFromOpenToHalfOpenEnabled: true
+            eventConsumerBufferSize: 10
+            failureRateThreshold: 50
+            minimumNumberOfCalls: 10
+            permittedNumberOfCallsInHalfOpenState: 3
+            registerHealthIndicator: true
+            slidingWindowSize: 10
+            waitDurationInOpenState: 4s
 spring:
     autoconfigure:
         exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
@@ -59,5 +46,14 @@ spring:
         port2: 6380
         timeout: 1000ms
         testkey: testKey
-        connectionLoopInterval: 500
+        connectionLoopInterval: 1000
         waitafterfailover: 10000
+management:
+    endpoints:
+        web:
+            exposure:
+                include: "*"
+    metrics:
+        export:
+            atlas:
+                enabled: false

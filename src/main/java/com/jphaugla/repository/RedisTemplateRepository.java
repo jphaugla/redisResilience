@@ -43,7 +43,7 @@ public class RedisTemplateRepository {
 	@CircuitBreaker(name = "backendA", fallbackMethod = "switchTemplate")
 	public Boolean testTheWrite(String stringKey, String stringValue )  {
 		redisTemplateReadArray[chooseRedis.getRedisIndex()].opsForValue().set(stringKey, stringValue);
-		// logger.info ("after call to set the vale");
+		// logger.info ("after call to set the value");
 		String returnValue = (String) redisTemplateReadArray[chooseRedis.getRedisIndex()].opsForValue().get(stringKey);
 		boolean b = false;
 		return (b);
@@ -58,15 +58,14 @@ public class RedisTemplateRepository {
 			// toggle the redis template to use to failover
 			if (chooseRedis.getRedisIndex() == 0) {
 				chooseRedis.setRedisIndex(1);
-				logger.info("Failed over from redistemplate1 to redistemplate2 ");
+				logger.info("Failed over from redistemplate1 to redistemplate2 redisIndex is " + chooseRedis.getRedisIndex());
 			} else {
 				chooseRedis.setRedisIndex(0);
-				logger.info("Failed over from redistemplate2 to redistemplate1 ");
+				logger.info("Failed over from redistemplate2 to redistemplate1 redisIndex is "  + chooseRedis.getRedisIndex());
 			}
 			returnFailedOver = true;
-			//  this is not working...
-			logger.info("Failover is " + returnFailedOver);
 		}
+		logger.info("Failover is " + returnFailedOver + " redisIndex is " + chooseRedis.getRedisIndex());
 		return returnFailedOver;
 	}
 
