@@ -13,20 +13,28 @@ resilience4j.circuitbreaker:
             automaticTransitionFromOpenToHalfOpenEnabled: true
             eventConsumerBufferSize: 10
             failureRateThreshold: 50
-            minimumNumberOfCalls: 5
-            permittedNumberOfCallsInHalfOpenState: 3
+            minimumNumberOfCalls: 3
+            permittedNumberOfCallsInHalfOpenState: 1000
             registerHealthIndicator: true
             slidingWindowSize: 10
-            waitDurationInOpenState: 3s
+            waitDurationInOpenState: 2000
+            waitDurationInOpenStateInt: 2000
         shared:
             eventConsumerBufferSize: 10
             failureRateThreshold: 50
             permittedNumberOfCallsInHalfOpenState: 30
             slidingWindowSize: 100
-            waitDurationInOpenState: 4s
-    instances:
+            waitDurationInOpenState: 4000
+    backends:
         backendA:
-            baseConfig: default
+            automaticTransitionFromOpenToHalfOpenEnabled: true
+            eventConsumerBufferSize: 10
+            failureRateThreshold: 50
+            minimumNumberOfCalls: 10
+            permittedNumberOfCallsInHalfOpenState: 3
+            registerHealthIndicator: true
+            slidingWindowSize: 10
+            waitDurationInOpenState: 4000
         backendB:
             automaticTransitionFromOpenToHalfOpenEnabled: true
             eventConsumerBufferSize: 10
@@ -35,7 +43,18 @@ resilience4j.circuitbreaker:
             permittedNumberOfCallsInHalfOpenState: 3
             registerHealthIndicator: true
             slidingWindowSize: 10
-            waitDurationInOpenState: 4s
+            waitDurationInOpenState: 4000
+resilience4j.retry:
+    configs:
+        default:
+            maxAttempts: 15
+            waitDuration: 100
+    instances:
+        backendA:
+            baseConfig: default
+        backendB:
+            baseConfig: default
+
 spring:
     autoconfigure:
         exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
@@ -47,7 +66,7 @@ spring:
         timeout: 1000ms
         testkey: testKey
         connectionLoopInterval: 1000
-        waitafterfailover: 10000
+        waitafterfailover: 5000
 management:
     endpoints:
         web:

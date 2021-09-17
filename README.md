@@ -1,20 +1,15 @@
-# Redisearch-Digital-Banking
-Provides a quick-start example of using Redis with springBoot with Banking structures.  Digital Banking uses an API microservices approach to enable high speed requests for account, customer and transaction information.  As seem below, this data is useful for a variety of business purposes in the bank.
+# RedisResilience
+This code is derived from Digital Banking github using redistemplate. The focus in this github is on failover and retry when a redis database is not available.  This would allow a client to failover from one active/active redis instance to another.
 <a href="" rel="Digital Banking"><img src="images/DigitalBanking.png" alt="" /></a>
-This is the same as Redis-Digital-Banking but will not use any Spring indexes.  Instead redisearch 2.0 indexes will be used
+
 
 ## Overview
-In this tutorial, a java spring boot application is run through a jar file to support typical API calls to a REDIS banking data layer.  A redis docker configuration is included.
+In this tutorial, a java spring boot application is run through a jar file to support typical API calls to a REDIS banking data layer.  A redis docker configuration is included with 2 separate redis containers running at different ports.  These are simulating two active/active redis dadtabases.  Each database can be easily stopped/started with docker.
 
-## Redis Advantages for Digital Banking
- * Redis easily handles high write transaction volume
- * Redis has no tombstone issues and can upsert posted transactions over pending
- * Redis Enterprise scales vertically (large nodes)  and horizontally (many nodes)
- * Redisearch 2.0 automatically indexes the hash structure created by Spring Java CRUD repository
 
 ## Requirements
 * Docker installed on your local system, see [Docker Installation Instructions](https://docs.docker.com/engine/installation/).
-* Alternatively, can run Redis Enterprise and set the redis host and port in the application.properties file
+* Alternatively, can run Redis Enterprise and set the redis host and port in the application.yml file
 * When using Docker for Mac or Docker for Windows, the default resources allocated to the linux VM running docker are 2GB RAM and 2 CPU's. Make sure to adjust these resources to meet the resource requirements for the containers you will be running. More information can be found here on adjusting the resources allocated to docker.
 
 [Docker for mac](https://docs.docker.com/docker-for-mac/#advanced)
@@ -27,26 +22,23 @@ In this tutorial, a java spring boot application is run through a jar file to su
  * [lettuce tips redis spring boot](https://www.bytepitch.com/blog/redis-integration-spring-boot/)
  * [spring data Reference in domain](https://github.com/spring-projects/spring-data-examples/blob/master/redis/repositories/src/main/java/example/springdata/redis/repositories/Person.java)
  * [spring data reference test code](https://github.com/spring-projects/spring-data-examples/blob/master/redis/repositories/src/test/java/example/springdata/redis/repositories/PersonRepositoryTests.java)
- * [spring async tips](https://dzone.com/articles/effective-advice-on-spring-async-part-1)
- * [brewdis sample application](https://github.com/redis-developer/brewdis)
- * [redis-developer lettucemod mesclun](https://github.com/redis-developer/lettucemod)
-
+ * [Resilience4j quickguide](https://www.baeldung.com/resilience4j)
+ * [Resilience4j documentation](https://resilience4j.readme.io/docs/getting-started-3)
+ * [Redis Retry Client](https://gitlab.com/deji.alaran/redis-java-clients/-/blob/master/src/main/java/com/redislabs/examples/redis/service/RedisClientsService.java)
+ * [Workaround for waitDurationInOpenState issue](https://stackoverflow.com/questions/65909665/circuitbreaker-not-loading-defaults-from-yaml-file)
 
 ## Technical Overview
 
-This github java code uses the mesclun library for redis modules.  The mesclun library supports RediSearch, RedisGears, and RedisTimeSeries.  The original github only used spring java without redisearch.  That repository is still intact at [this github location](https://github.com/jphaugla/Redis-Digital-Banking)
-All of the Spring Java indexes have been removed in this version.
+This github uses resilience4j circuit breaker and retry mechanisms to make a more resilient client for Spring data redistemplate.  A resilience4j circuit breaker is used in a continual loop to do the failover logic while a resilience4j retry is used on client writes to get retry capability.  The failover decision is controlled by the circuit breaker callback method.
 
 ### The spring java code
 This is basic spring links
-* [Spring Redis](https://docs.spring.io/spring-data/data-redis/docs/current/reference/html/#redis.repositories.indexes) 
-* *boot*-Contains index creation for each of the four redisearch indexes used in this solution:  Account, Customer, Merchant, and Transaction
-* *config*-Initial configuration module using autoconfiguration and a threadpool sizing to adjust based on machine size
+* *config*-Initial configuration module using autoconfiguration, redistemplate connections, and hard coded resilience4j circuit breaker needed due to a bug.  Should be able to define the circuit breaker with application.yml but odd bug with waitDurationInOpenState at 7.1.
 * *controller*-http API call interfaces
 * *data*-code to generate POC type of customer, account, and transaction code
 * *domain*-has each of the java objects with their columns.  Enables all the getter/setter methods
-* *repository*-has CRUD repository definitions.  With transition to redisearch 2.0, not used as heavily as previously
-* *service*-asyncservice and bankservice doing the interaction with redis
+* *repository*-has repository definitions
+* *service*- bankservice doing the interaction with redis
 ### 
 The java code demonstrates common API actions with the data layer in REDIS.  The java spring Boot framework minimizes the amount of code to build and maintain this solution.  Maven is used to build the java code and the code is deployed to the tomcat server.
 
@@ -57,7 +49,7 @@ The java code demonstrates common API actions with the data layer in REDIS.  The
 1. Prepare Docker environment-see the Prerequisites section above...
 2. Pull this github into a directory
 ```bash
-git clone https://github.com/jphaugla/Redisearch-Digital-Banking.git
+git clone https://github.com/jphaugla/redisResilience
 ```
 3. Refer to the notes for redis Docker images used but don't get too bogged down as docker compose handles everything except for a few admin steps on tomcat.
  * [https://hub.docker.com/r/bitnami/redis/](https://hub.docker.com/r/bitnami/redis/)  
@@ -77,35 +69,28 @@ mvn package
 ```bash
 java -jar target/redis-0.0.1-SNAPSHOT.jar
 ```
-3.  Test the application from a separate terminal window.  This script uses an API call to generate sample banking customers, accounts and transactions.  It uses Spring ASYNC techniques to generate higher load.  A flag chooses between running the transactions pipelined in Redis or in normal non-pipelined method.
+3. Note:  parameters for the circuit breaker and retry are in the application.yml.  For the circuit breaker, the code reads all the default values such as:  resilience4j.circuitbreaker.configs.default.failureRateThreshold.  However, the waitDurationInOpenState has an odd error so added waitDurationInOpenStateInt.  
+4. Once the solution is running do a test write
 ```bash
-./scripts/generateData.sh
+cd scripts
+./saveCustomer.sh 
+Done%                                                
 ```
-Shows a benchmark test run of  generateData.sh on GCP servers.  Although, this test run is using redisearch 1.0 code base.  Need to rerun this test.
-<a href="" rel="Generate Data Benchmark"><img src="images/Benchmark.png" alt="" /></a>
-
-4.  Investigate the APIs in ./scripts.  Adding the redisearch queries behind each script here also...
-  * addTag.sh - add a tag to a transaction.  Tags allow user to mark  transactions to be in a buckets such as Travel or Food for budgetary tracking purposes
-  * generateData.sh - simple API to generate default customer, accounts, merchants, phone numbers, emails and transactions
-  * generateLots.sh - for server testing to generate higher load levels.  Use with startAppservers.sh.  Not for use with docker setup.  This is load testing with redis enterprise and client application running in same network in the cloud.
-  * getByAccount.sh - find transactions for an account between a date range
-  * getByCreditCard.sh - find transactions for a credit card  between a date range
-  * getByCustID.sh - retrieve transactions for customer
-  * getByEmail.sh - retrieve customer record using email address
-  * getByMerchant.sh - find all transactions for an account from one merchant for date range
-  * getByMerchantCategory.sh - find all transactions for an account from merchant category for date range
-  * getByNamePhone.sh - get customers by phone and full name.
-  * getByPhone.sh - get customers by phone only
-  * getByStateCity.sh - get customers by city and state
-  * getByZipLastname.sh -  get customers by zipcode and lastname.
-  * getReturns.sh - get returned transactions count by reason code
-  * getTags.sh - get all tags on an account
-  * getTaggedAccountTransactions.sh - find transactions for an account with a particular tag
-  * getTransaction.sh - get one transaction by its transaction ID
-  * getTransactionStatus.sh - see count of transactions by account status of PENDING, AUTHORIZED, SETTLED
-  * saveAccount.sh - save a sample account
-  * saveCustomer.sh - save a sample customer
-  * saveTransaction.sh - save a sample Transaction
-  * startAppservers.sh - start multiple app server instances for load testing
-  * testPipeline.sh - test pipelining
-  * updateTransactionStatus.sh - generate new transactions to move all transactions from one transaction Status up to the next transaction status. Parameter is target status.  Can choose SETTLED or POSTED.  Will move 100,000 transactions per call
+5. Start the connection loop test running with this API call script
+```bash
+./startConnectionLoop.sh
+```
+6. Now do each of these relatively quickly so, the failover completes before the retry is expired on the write. 
+```bash
+docker stop redis1
+./saveCustomer.sh
+```
+NOTE:   Because redis1 stopped, the circuit breaker will kick in on the failure of the write to redis in the connection loop.  This will call the circuit breaker to go to its callback routine.  This callback routine will do a failover once the circuit break opens.  At the same time, the client write will retry until successful or maximum retries occur
+7. re-start redis1
+```bash
+docker start redis1
+```
+8. switch back is a manual process
+```bash
+./switchRedis.sh
+```

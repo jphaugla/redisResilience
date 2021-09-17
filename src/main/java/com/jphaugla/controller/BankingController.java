@@ -112,6 +112,10 @@ public class BankingController {
 	public void startLoop() throws InterruptedException {
 		bankService.startRedisWrite();
 	}
+	@GetMapping("/switchRedis")
+	public void switchRedis() throws InterruptedException {
+		bankService.switchTemplate("key1", "key1");
+	}
 
 
 }

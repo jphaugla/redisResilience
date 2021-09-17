@@ -69,10 +69,18 @@ public class BankService {
 		logger.info("returned customer " + returnCustomer);
 		return Optional.of(returnCustomer);
 	}
+	public boolean switchTemplate(String stringKey, String stringValue) throws InterruptedException {
+		logger.info("in bankservice switchtemplate");
+		Exception exception = null;
+		boolean returnval = redisTemplateRepository.switchTemplate(stringKey, stringValue, exception);
+		return returnval;
+	}
+
 	public void startRedisWrite() throws InterruptedException {
 		int loopIndex=0;
 		logger.info("in startRedisWrite before loop loopInterval is " + loopInterval + " waitInOpen is " + waitInOpen);
 		String testValue;
+		redisTemplateRepository.setKeys();
 		do {
 			testValue=Integer.toString(loopIndex);
 			// logger.info("in write loop with idx " + testValue);
@@ -109,6 +117,7 @@ public class BankService {
 		);
 		customerRepository.create(customer);
 	}
+
 
 	/* public Optional<PhoneNumber> getPhoneNumber(String phoneString) {
 		return phoneRepository.findById(phoneString);

@@ -3,6 +3,11 @@ package com.jphaugla.config;
 import com.jphaugla.domain.Customer;
 import com.jphaugla.repository.RedisTemplateRepository;
 import com.jphaugla.service.ChooseRedis;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.common.circuitbreaker.configuration.CircuitBreakerConfigCustomizer;
+import io.github.resilience4j.core.IntervalFunction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +36,8 @@ import java.time.Duration;
 import java.util.concurrent.Executor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Configuration
 @EnableConfigurationProperties(RedisProperties.class)
@@ -56,32 +63,47 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisServerConf,clientConfig);
     }
 
+
+    // Case 3: Works
+    @Bean
+    public CircuitBreaker zCircuitBreaker(CircuitBreakerRegistry circuitBreakerRegistry,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.slidingWindowSize}") Integer slidingWindowSize,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.permittedNumberOfCallsInHalfOpenState}") Integer permittedNumberOfCallsInHalfOpenState,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.minimumNumberOfCalls}") Integer minimumNumberOfCalls,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.failureRateThreshold}") Integer failureRateThreshold,
+                                          //   odd error where this seems to be hardcoded to 45s somewhere
+                                          // @Value("${resilience4j.circuitbreaker.configs.default.waitDurationInOpenState}") Integer waitDurationInOpenState,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.waitDurationInOpenStateInt}") Integer waitDurationInOpenStateInt,
+                                          @Value("${resilience4j.circuitbreaker.configs.default.automaticTransitionFromOpenToHalfOpenEnabled}") Boolean automaticTransitionFromOpenToHalfOpenEnabled)
+
+  {
+
+        CircuitBreakerConfig cfg = CircuitBreakerConfig.custom()
+                .slidingWindowSize(slidingWindowSize)
+                .minimumNumberOfCalls(minimumNumberOfCalls)
+                .permittedNumberOfCallsInHalfOpenState(permittedNumberOfCallsInHalfOpenState)
+                .failureRateThreshold(failureRateThreshold)
+                .waitDurationInOpenState(Duration.ofMillis(waitDurationInOpenStateInt))
+                .automaticTransitionFromOpenToHalfOpenEnabled(automaticTransitionFromOpenToHalfOpenEnabled)
+                .build();
+
+        return circuitBreakerRegistry.circuitBreaker("zCircuitBreaker", cfg);
+    }
     @Bean
     @Primary
     public RedisTemplate<Object, Object> redisTemplateW1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-       // redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-       //  redisTemplate.setKeySerializer(new StringRedisSerializer());
-       //  redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
-        redisTemplate.afterPropertiesSet();
-        return redisTemplate;
-    }
-
-    @Bean
-    public RedisTemplate<Object, Object> redisTemplateR1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        //  redisTemplate.setKeySerializer(new StringRedisSerializer());
-        //   redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
     @Bean
     @Primary
-    public StringRedisTemplate strRedisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
+    public StringRedisTemplate stringRedisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
         StringRedisTemplate redisTemplate = new StringRedisTemplate();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
@@ -102,40 +124,20 @@ public class RedisConfig {
     public RedisTemplate<Object, Object> redisTemplateW2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-        // redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        // redisTemplate.setKeySerializer(new StringRedisSerializer());
-        // redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
         redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 
     @Bean
-    public RedisTemplate<Object, Object> redisTemplateR2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-    //    redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-    //    redisTemplate.setKeySerializer(new StringRedisSerializer());
-    //    redisTemplate.setHashValueSerializer(new GenericToStringSerializer<Long>(Long.class));
-    //    redisTemplate.afterPropertiesSet();
-        return redisTemplate;
-    }
-    @Bean
-    public StringRedisTemplate strRedisTemplate2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
+    public StringRedisTemplate stringRedisTemplate2(@Qualifier("redisConnectionFactory2") RedisConnectionFactory redisConnectionFactory) {
         StringRedisTemplate redisTemplate = new StringRedisTemplate();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
 
-    @Bean("threadPoolTaskExecutor")
-    public TaskExecutor getAsyncExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-//        on large 64 core machine, drove setCorePoolSize to 200 to really spike performance
-        executor.setCorePoolSize(20);
-        executor.setMaxPoolSize(1000);
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setThreadNamePrefix("Async-");
-        return executor;
-    }
     @Bean
     public ChooseRedis chooseRedis() {
         return new ChooseRedis();
@@ -146,8 +148,8 @@ public class RedisConfig {
         return (templateArray);
     };
     @Bean
-    public RedisTemplate[] redisTemplateReadArray(@Qualifier("redisTemplateR1") RedisTemplate redisTemplate1, @Qualifier("redisTemplateR2")RedisTemplate redisTemplate2) {
-        RedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
+    public StringRedisTemplate[] redisTemplateReadArray(@Qualifier("stringRedisTemplate1") StringRedisTemplate redisTemplate1, @Qualifier("stringRedisTemplate2")StringRedisTemplate redisTemplate2) {
+        StringRedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
         return (templateArray);
     };
 }
