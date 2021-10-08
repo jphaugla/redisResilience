@@ -2,7 +2,6 @@ package com.jphaugla.config;
 
 import com.jphaugla.domain.Customer;
 import com.jphaugla.repository.RedisTemplateRepository;
-import com.jphaugla.service.ChooseRedis;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -19,9 +18,8 @@ import org.springframework.context.annotation.Configuration;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisPassword;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
@@ -63,7 +61,6 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisServerConf,clientConfig);
     }
 
-
     // Case 3: Works
     @Bean
     public CircuitBreaker zCircuitBreaker(CircuitBreakerRegistry circuitBreakerRegistry,
@@ -89,8 +86,18 @@ public class RedisConfig {
 
         return circuitBreakerRegistry.circuitBreaker("zCircuitBreaker", cfg);
     }
+
+    @Bean(name = "redisConnectionFactory2")
+    public LettuceConnectionFactory redisConnectionFactory2() {
+        RedisStandaloneConfiguration redisServerConf2 = new RedisStandaloneConfiguration();
+        redisServerConf2.setHostName(env.getProperty("spring.redis.host2"));
+        redisServerConf2.setPort(Integer.parseInt("6380"));
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .commandTimeout(redisCommandTimeout).build();
+        return new LettuceConnectionFactory(redisServerConf2,clientConfig);
+    }
+
     @Bean
-    @Primary
     public RedisTemplate<Object, Object> redisTemplateW1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
@@ -102,22 +109,10 @@ public class RedisConfig {
     }
 
     @Bean
-    @Primary
     public StringRedisTemplate stringRedisTemplate1(@Qualifier("redisConnectionFactory1") RedisConnectionFactory redisConnectionFactory) {
         StringRedisTemplate redisTemplate = new StringRedisTemplate();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
-    }
-
-    @Bean(name = "redisConnectionFactory2")
-    public LettuceConnectionFactory redisConnectionFactory2() {
-        RedisStandaloneConfiguration redisServerConf = new RedisStandaloneConfiguration();
-        redisServerConf.setHostName(env.getProperty("spring.redis.host2"));
-        redisServerConf.setPort(Integer.parseInt(env.getProperty("spring.redis.port2")));
-        redisServerConf.setPassword(RedisPassword.of(env.getProperty("spring.redis.password2")));
-        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .commandTimeout(redisCommandTimeout).build();
-        return new LettuceConnectionFactory(redisServerConf,clientConfig);
     }
 
     @Bean
@@ -138,18 +133,14 @@ public class RedisConfig {
         return redisTemplate;
     }
 
+
     @Bean
-    public ChooseRedis chooseRedis() {
-        return new ChooseRedis();
+    public RedisTemplateRepository redisTemplates(@Qualifier("redisTemplateW1") RedisTemplate redisTemplateW1, @Qualifier("redisTemplateW2") RedisTemplate redisTemplateW2,
+                                                  @Qualifier("stringRedisTemplate1") StringRedisTemplate stringRedisTemplate1,  @Qualifier("stringRedisTemplate2") StringRedisTemplate stringRedisTemplate2){
+        RedisTemplateRepository redisTemplateRepository = new RedisTemplateRepository( redisTemplateW1, redisTemplateW2, stringRedisTemplate1,  stringRedisTemplate2);
+        return redisTemplateRepository;
     }
-    @Bean
-    public RedisTemplate[] redisTemplateWriteArray(@Qualifier("redisTemplateW1") RedisTemplate redisTemplate1, @Qualifier("redisTemplateW2")RedisTemplate redisTemplate2) {
-        RedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
-        return (templateArray);
-    };
-    @Bean
-    public StringRedisTemplate[] redisTemplateReadArray(@Qualifier("stringRedisTemplate1") StringRedisTemplate redisTemplate1, @Qualifier("stringRedisTemplate2")StringRedisTemplate redisTemplate2) {
-        StringRedisTemplate[] templateArray = { redisTemplate1, redisTemplate2 };
-        return (templateArray);
-    };
+
+
+
 }

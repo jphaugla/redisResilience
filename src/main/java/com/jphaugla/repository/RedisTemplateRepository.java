@@ -1,27 +1,34 @@
 package com.jphaugla.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jphaugla.service.ChooseRedis;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.common.circuitbreaker.configuration.CircuitBreakerConfigCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnection;
+
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
+
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Repository;
-import java.lang.Thread.*;
-
-import java.time.Duration;
 
 
 @Repository
+@Configuration
 public class RedisTemplateRepository {
 
 	final Logger logger = LoggerFactory.getLogger(RedisTemplateRepository.class);
@@ -29,39 +36,78 @@ public class RedisTemplateRepository {
 	ObjectMapper mapper = new ObjectMapper();
 
 	@Autowired
-	private ChooseRedis chooseRedis;
-
-	@Autowired
-	@Qualifier("redisTemplateWriteArray")
-	private RedisTemplate [] redisTemplateWriteArray;
-
-	@Autowired
-	@Qualifier("redisTemplateReadArray")
-	private StringRedisTemplate[] redisTemplateReadArray;
+	private Environment env;
 
 	@Autowired
 	@Qualifier("redisConnectionFactory1")
-	private RedisConnectionFactory redisConnectionFactory1;
+	private LettuceConnectionFactory redisConnectionFactory1;
 
 	@Autowired
 	@Qualifier("redisConnectionFactory2")
-	private RedisConnectionFactory redisConnectionFactory2;
+	private LettuceConnectionFactory redisConnectionFactory2;
+
+	@Autowired
+	@Qualifier("redisTemplateW1")
+	private RedisTemplate<Object, Object> redisTemplateW1;
+
+	@Autowired
+	@Qualifier("redisTemplateW2")
+	private RedisTemplate<Object, Object> redisTemplateW2;
+
+	@Autowired
+	@Qualifier("stringRedisTemplate1")
+	private StringRedisTemplate stringRedisTemplate1;
+
+	@Autowired
+	@Qualifier("stringRedisTemplate2")
+	private StringRedisTemplate stringRedisTemplate2;
+
+	private RedisTemplate<Object, Object>[] redisTemplateWriteArray;
+	private StringRedisTemplate[] redisTemplateReadArray;
+
+	private int redisIndex;
 
 	private String key1 = "key1";
 	private String key2 = "key2";
 
+	public RedisTemplateRepository(@Qualifier("redisTemplateW1") RedisTemplate redisTemplateW1, @Qualifier("redisTemplateW2") RedisTemplate redisTemplateW2,
+								   @Qualifier("stringRedisTemplate1") StringRedisTemplate stringRedisTemplate1,  @Qualifier("stringRedisTemplate2") StringRedisTemplate stringRedisTemplate2) {
+		logger.info("starting RedisTemplateRepository constructor");
+		redisIndex = 0;
+		redisTemplateWriteArray = new RedisTemplate[]{redisTemplateW1, redisTemplateW2};
+		redisTemplateReadArray = new StringRedisTemplate[]{ stringRedisTemplate1, stringRedisTemplate2 };
+	}
 
-	public RedisTemplateRepository() {
-		logger.info("RedisTemplateRepository constructor");
+	public RedisTemplate<Object, Object> getRedisTemplateW1() {
+		return redisTemplateW1;
+	}
+	public RedisTemplate<Object, Object> getRedisTemplateW2() {
+		return redisTemplateW2;
+	}
+	public StringRedisTemplate getStringRedisTemplate1() {
+		return stringRedisTemplate1;
+	}
+	public StringRedisTemplate getStringRedisTemplate2() {
+		return stringRedisTemplate2;
+	}
+
+	public void setKeys () {
+		redisTemplateReadArray[0].opsForValue().set(key1, key1);
+		redisTemplateReadArray[1].opsForValue().set(key2, key2);
+	}
+	public int getRedisIndex() {
+		return redisIndex;
+	}
+	public void setRedisIndex(int index) {
+		redisIndex = index;
 	}
 
 	@CircuitBreaker(name = "zCircuitBreaker", fallbackMethod = "switchTemplate")
 	public Boolean testTheWrite(String stringKey, String stringValue )  {
-		redisTemplateReadArray[chooseRedis.getRedisIndex()].opsForValue().set(stringKey, stringValue);
+		redisTemplateReadArray[redisIndex].opsForValue().set(stringKey, stringValue);
 		// logger.info ("after call to set the value");
-		String returnValue = (String) redisTemplateReadArray[chooseRedis.getRedisIndex()].opsForValue().get(stringKey);
-		boolean b = false;
-		return (b);
+		String returnValue = (String) redisTemplateReadArray[redisIndex].opsForValue().get(stringKey);
+		return false;
 	}
 
 	public Boolean switchTemplate(String stringKey, String stringValue , Exception exception) throws InterruptedException {
@@ -77,61 +123,29 @@ public class RedisTemplateRepository {
 		boolean returnFailedOver = false;
 		if ( exception == null || exception instanceof CallNotPermittedException ) {
 			// toggle the redis template to use to failover
-			if (chooseRedis.getRedisIndex() == 0) {
-				chooseRedis.setRedisIndex(1);
-				logger.info("Failed over from redistemplate1 to redistemplate2 redisIndex is " + chooseRedis.getRedisIndex());
+			if (redisIndex == 0) {
+				redisIndex = 1;
+				logger.info("Failed over from redistemplate1 to redistemplate2 redisIndex is " + redisIndex);
 			} else {
-				chooseRedis.setRedisIndex(0);
-				logger.info("Failed over from redistemplate2 to redistemplate1 redisIndex is " + chooseRedis.getRedisIndex());
+				redisIndex=0;
+				logger.info("Failed over from redistemplate2 to redistemplate1 redisIndex is " + redisIndex);
 			}
 			returnFailedOver = true;
 		}
-		logger.info("Failover is " + returnFailedOver + " redisIndex is " + chooseRedis.getRedisIndex());
+		logger.info("Failover is " + returnFailedOver + " redisIndex is " + redisIndex);
 		return returnFailedOver;
 	}
 
-	private String getFromConnectionFactory(RedisConnectionFactory redisConnectionFactory, String key) {
-		RedisConnection connection = redisConnectionFactory.getConnection();
-		logger.info("Retrieving using connection from " + redisConnectionFactory);
-		byte[] response = connection.get(key.getBytes());
-		connection.close();
-		return response == null ? null : new String(response);
+	public RedisTemplate<Object, Object> getWriteTemplate(){
+		logger.info("in getWriteTemplate with redisIndex " + redisIndex);
+		RedisTemplate<Object, Object> newTemplate = redisTemplateWriteArray[redisIndex];
+		return newTemplate;
 	}
 
-	//  this version tries to check to see if the database to failover to is up before doing the failover but it did not work so going back to simpler
-	public Boolean oldSwitchTemplate(String stringKey, String stringValue , Exception exception) throws InterruptedException {
-		//  this gets called back with every exception but only  do the switch
-		//  when it is called by the called not permitted exception (circuit breaker open)
-		//  check to make sure target redis is up before making the switch
-		logger.info("switchtemplate with exception " + exception.getMessage());
-		boolean returnFailedOver = false;
-		if (exception instanceof CallNotPermittedException) {
-			// toggle the redis template to use to failover
-			if (chooseRedis.getRedisIndex() == 0) {
-				String returnValue = getFromConnectionFactory(redisConnectionFactory2,"key2");
-				logger.info("retrunValue from key2 is " + returnValue);
-				if ( returnValue != null) {
-					chooseRedis.setRedisIndex(1);
-					returnFailedOver = true;
-					logger.info("Failed over from redistemplate1 to redistemplate2 redisIndex is " + chooseRedis.getRedisIndex());
-				} else {
-					logger.info("Did not fail over as redis2 is down");
-				}
-			} else {
-				String returnValue = getFromConnectionFactory(redisConnectionFactory1,"key1");
-				logger.info("returnValue from key1 is " + returnValue);
-				if (getFromConnectionFactory(redisConnectionFactory1,"key1") != null) {
-					chooseRedis.setRedisIndex(0);
-					returnFailedOver = true;
-					logger.info("Failed over from redistemplate2 to redistemplate1 redisIndex is " + chooseRedis.getRedisIndex());
-				} else {
-					logger.info("Did not fail over as redis2 is down");
-				}
-			}
-		}
-		logger.info("Failover is " + returnFailedOver + " redisIndex is " + chooseRedis.getRedisIndex());
-		return returnFailedOver;
+	public StringRedisTemplate getReadTemplate(){
+		logger.info("in getReadTemplate with redisIndex " + redisIndex);
+		StringRedisTemplate newStringRedisTemplate = redisTemplateReadArray[redisIndex];
+		return newStringRedisTemplate;
 	}
-
 
 }

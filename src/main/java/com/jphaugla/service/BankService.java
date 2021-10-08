@@ -94,7 +94,6 @@ public class BankService {
 			sleep(waitInterval);
 		} while (true);
 	}
-
 	public void saveSampleCustomer() throws ParseException, RedisCommandExecutionException {
 		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.28");
 		Date last_update = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.29");
