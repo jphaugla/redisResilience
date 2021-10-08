@@ -22,12 +22,12 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 public class AsyncService {
-
+/*
 
     @Qualifier("strRedisTemplate1")
     @Autowired
     private StringRedisTemplate redisTemplate;
-/*
+
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeAllTransaction(List<Transaction> transactions) {
         transactionRepository.saveAll(transactions);

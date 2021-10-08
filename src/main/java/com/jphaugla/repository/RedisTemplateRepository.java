@@ -55,11 +55,6 @@ public class RedisTemplateRepository {
 		logger.info("RedisTemplateRepository constructor");
 	}
 
-	public void setKeys () {
-		redisTemplateReadArray[0].opsForValue().set(key1, key1);
-		redisTemplateReadArray[1].opsForValue().set(key2, key2);
-	}
-
 	@CircuitBreaker(name = "zCircuitBreaker", fallbackMethod = "switchTemplate")
 	public Boolean testTheWrite(String stringKey, String stringValue )  {
 		redisTemplateReadArray[chooseRedis.getRedisIndex()].opsForValue().set(stringKey, stringValue);
