@@ -13,22 +13,17 @@ import com.jphaugla.data.BankGenerator;
 import com.jphaugla.domain.*;
 import com.jphaugla.repository.*;
 
-
 import io.lettuce.core.RedisCommandExecutionException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,6 +36,24 @@ public class BankService {
 
 	@Autowired
 	private CustomerRepository customerRepository;
+
+	@Autowired
+	private PhoneRepository phoneRepository;
+
+	@Autowired
+	private EmailRepository emailRepository;
+
+	@Autowired
+	private AccountRepository accountRepository;
+
+	@Autowired
+	private MerchantRepository merchantRepository;
+
+	@Autowired
+	private TransactionRepository transactionRepository;
+
+	@Autowired
+	private TransactionReturnRepository transactionReturnRepository;
 
 	@Autowired
 	private RedisTemplateRepository redisTemplateRepository;
@@ -100,11 +113,8 @@ public class BankService {
 		String cust = "cust0001";
 		Email home_email = new Email("jasonhaugland@gmail.com", "home", cust);
 		Email work_email = new Email("jason.haugland@redislabs.com", "work", cust);
-		PhoneNumber cell_phone = new PhoneNumber("612-408-4394", "cell", cust);
-		/* emailRepository.save(home_email);
-		emailRepository.save(work_email);
-		phoneRepository.save(cell_phone);
-		 */
+		Phone cell_phone = new Phone("612-408-4394", "cell", cust);
+
 		Customer customer = new Customer( cust, "4744 17th av s", "",
 				"Home", "N", "Minneapolis", "00",
 				"jph", create_date.getTime(), "IDR",
@@ -117,186 +127,64 @@ public class BankService {
 		customerRepository.create(customer);
 	}
 
-
-	/* public Optional<PhoneNumber> getPhoneNumber(String phoneString) {
-		return phoneRepository.findById(phoneString);
-	}
-
-	public Customer getCustomerByPhone(String phoneString) {
-		// get list of customers having this phone number
-		//  first, get phone hash with this phone number
-		//   next, get the customer id with this phone number
-		//   third, use the customer id to get the customer
-		Optional<PhoneNumber> optPhone = getPhoneNumber(phoneString);
-		Optional<Customer> returnCustomer = null;
-		Customer returnCust = null;
-		logger.info("in bankservice.getCustomerByPhone optphone is" + optPhone.isPresent());
-		if (optPhone.isPresent()) {
-			PhoneNumber onePhone = optPhone.get();
-			String customerId = onePhone.getCustomerId();
-			logger.info("customer is " + customerId);
-			returnCustomer = customerRepository.findById(customerId);
-		}
-
-		if ((returnCustomer != null) && (returnCustomer.isPresent())) {
-			returnCust = returnCustomer.get();
-			// logger.info("customer is " + returnCust);
-
-		} else {
-			returnCust = null;
-		}
-		return returnCust;
+	public Optional<Phone> getPhoneNumber(String phoneString) {
+		return phoneRepository.get(phoneString);
 	}
 
 	public Optional<Email> getEmail(String email) {
-		return emailRepository.findById(email);
-	}
-
-	public Customer getCustomerByEmail(String emailString) {
-		// get list of customers having this email number
-		//  first, get email hash with this email number
-		//   next, get the customer id with this email number
-		//   third, use the customer id to get the customer
-		Optional<Email> optionalEmail = getEmail(emailString);
-		Optional<Customer> returnCustomer = null;
-		Customer returnCust = null;
-		logger.info("in bankservice.getCustomerByEmail optEmail is" + optionalEmail.isPresent());
-		if (optionalEmail.isPresent()) {
-			Email oneEmail = optionalEmail.get();
-			String customerId = oneEmail.getCustomerId();
-			// logger.info("customer is " + customerId);
-			returnCustomer = customerRepository.findById(customerId);
-		}
-
-		if ((returnCustomer != null) && (returnCustomer.isPresent())) {
-			returnCust = returnCustomer.get();
-			logger.info("customer is " + returnCust);
-
-		} else {
-			returnCust = null;
-		}
-		return returnCust;
+		return Optional.ofNullable(emailRepository.get(email));
 	}
 
 
+	public int deleteCustomerEmail(String customerID) {
+		logger.info("in bankservice.deleteCustomerEmail with CustomerID " + customerID);
+		int deleteCount = emailRepository.deleteCustomerEmails(customerID);
+		return deleteCount;
+	}
 	public Transaction getTransaction(String transactionID) {
 		Optional<Transaction> optionalTransaction;
 		Transaction returnTransaction = null;
-		optionalTransaction = transactionRepository.findById(transactionID);
+		optionalTransaction = Optional.ofNullable(transactionRepository.get(transactionID));
 		if(optionalTransaction.isPresent()) {
 			returnTransaction = optionalTransaction.get();
 		}
 		return returnTransaction;
 	}
 
+	private void sleep(int i) {
+		try {
+			Thread.sleep(i);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public String getDateFullDayQueryString(String stringDate) throws ParseException {
+		Date inDate = new SimpleDateFormat("MM/dd/yyyy").parse(stringDate);
+		Long inUnix = inDate.getTime();
+		//  since the transaction ID is also in the query can take a larger reach around the date column
+		Long startUnix = inUnix - 86400*1000;
+		Long endUnix = inUnix + 86400*1000;
+		return " @postingDate:[" + startUnix + " " + endUnix + "]";
+	}
+
+	public String getDateToFromQueryString(Date startDate, Date endDate) throws ParseException {
+		/* Date toDate = new SimpleDateFormat("MM/dd/yyyy").parse(to);
+		Date fromDate = new SimpleDateFormat("MM/dd/yyyy").parse(from);
+		 */
+		Long startUnix = startDate.getTime();
+		Long endUnix = endDate.getTime();
+		return " @postingDate:[" + startUnix + " " + endUnix + "]";
+	}
 	//   writeTransaction using crud without future
 	private void writeTransaction(Transaction transaction) {
-		logger.info("writing a transaction " + transaction);
-		transactionRepository.save(transaction);
-	}
-	// writeTransaction using crud with Future
-	private CompletableFuture<Integer> writeTransactionFuture(Transaction transaction) throws IllegalAccessException {
-		CompletableFuture<Integer> transaction_cntr = null;
-		transaction_cntr = asyncService.writeTransaction(transaction);
-		//   writes a sorted set to be used as the posted date index
-
-		return transaction_cntr;
+		// logger.info("writing a transaction " + transaction);
+		transactionRepository.create(transaction);
 	}
 
-
-	public List<String> getTransactionReturns() {
-		List <String> reportList = new ArrayList<>();
-		logger.info("entering getTransactionReturns");
-		List<TransactionReturn> transactionReturns = (List<TransactionReturn>) transactionReturnRepository.findAll();
-		logger.info("have the returncodes" + transactionReturns);
-		String reasonCode = null;
-		String reportLine=null;
-		for (TransactionReturn transactionReturn : transactionReturns) {
-			reasonCode = transactionReturn.getReasonCode();
-			logger.info("getting size for reasonCode" + reasonCode);
-
-			int total = Math.toIntExact(redisTemplate.opsForSet().size("Transaction:transactionReturn:" + reasonCode));
-			reportLine = reasonCode + ":" + total;
-			reportList.add(reportLine);
-		}
-		return reportList;
-	}
-
-	public void saveSampleCustomer() throws ParseException, RedisCommandExecutionException {
-		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.28");
-		Date last_update = new SimpleDateFormat("yyyy.MM.dd").parse("2020.03.29");
-		String cust = "cust0001";
-		Email home_email = new Email("jasonhaugland@gmail.com", "home", cust);
-		Email work_email = new Email("jason.haugland@redislabs.com", "work", cust);
-		PhoneNumber cell_phone = new PhoneNumber("612-408-4394", "cell", cust);
-		emailRepository.save(home_email);
-		emailRepository.save(work_email);
-		phoneRepository.save(cell_phone);
-		Customer customer = new Customer( cust, "4744 17th av s", "",
-				"Home", "N", "Minneapolis", "00",
-				"jph", create_date, "IDR",
-				"A", "BANK", "1949.01.23",
-				"Ralph", "Ralph Waldo Emerson", "M",
-				"887778989", "SSN", "Emerson", last_update,
-				"jph", "Waldo",  "MR",
-				"help", "MN", "55444", "55444-3322",
-				home_email, work_email,
-				null, null, null, null,
-				cell_phone,null
-		);
-		customerRepository.save(customer);
-	}
-	public void saveSampleAccount() throws ParseException, RedisCommandExecutionException {
-		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2010.03.28");
-		Account account = new Account("cust001", "acct001",
-				"credit", "teller", "active",
-				"ccnumber666655", create_date,
-				null, null, null, null);
-		accountRepository.save(account);
-	}
-	public void saveAccount(Account account) {
-		HashOperations<String, String, String> opsForHash = stringRedisTemplate.ops
-	}
-	public void saveSampleTransaction() throws ParseException, RedisCommandExecutionException {
-		Date settle_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.28");
-		Date post_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.28");
-		Date init_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.27");
-
-		Merchant merchant = new Merchant("Cub Foods", "5411",
-				"Grocery Stores", "MN", "US");
-		logger.info("before save merchant");
-		merchantRepository.save(merchant);
-
-		Transaction transaction = new Transaction("1234", "acct01",
-				"Debit", merchant.getName() + ":" + "acct01", "referenceKeyType",
-				"referenceKeyValue", "323.23",  "323.22", "1631",
-				"Test Transaction", init_date, settle_date, post_date,
-				"POSTED", null, "ATM665", "Outdoor");
-		logger.info("before save transaction");
-		writeTransaction(transaction);
-	}
-
-
-	public String testPipeline(Integer noOfRecords) {
-		BankGenerator.Timer pipelineTimer = new BankGenerator.Timer();
-		this.redisTemplate.executePipelined(new RedisCallback<Object>() {
-			@Override
-			public Object doInRedis(RedisConnection connection)
-					throws DataAccessException {
-				connection.openPipeline();
-				String keyAndValue=null;
-				for (int index=0;index<noOfRecords;index++) {
-					keyAndValue = "Silly"+index;
-					connection.set(keyAndValue.getBytes(), keyAndValue.getBytes());
-				}
-				connection.closePipeline();
-				return null;
-			}
-		});
-		pipelineTimer.end();
-		logger.info("Finished writing " + noOfRecords + " created in " +
-				pipelineTimer.getTimeTakenSeconds() + " seconds.");
-		return "Done";
+	public void postCustomer(Customer customer) {
+		logger.info("in postCustomer with Customer =" + customer);
+		customerRepository.create(customer);
 	}
 
 	public  String generateData(Integer noOfCustomers, Integer noOfTransactions, Integer noOfDays,
@@ -317,8 +205,8 @@ public class BankService {
 				+ transactionsPerAccount);
 		List<Merchant> merchants = BankGenerator.createMerchantList();
 		List<TransactionReturn> transactionReturns = BankGenerator.createTransactionReturnList();
-		merchantRepository.saveAll(merchants);
-		transactionReturnRepository.saveAll(transactionReturns);
+		merchantRepository.createAll(merchants);
+		transactionReturnRepository.createAll(transactionReturns);
 		CompletableFuture<Integer> transaction_cntr = null;
 		if(pipelined) {
 			logger.info("doing this pipelined");
@@ -352,15 +240,29 @@ public class BankService {
 				transTimer.getTimeTakenSeconds() + " seconds.");
 		return "Done";
 	}
+	// writeTransaction using crud with Future
+	private CompletableFuture<Integer> writeTransactionFuture(Transaction transaction) throws IllegalAccessException {
+		CompletableFuture<Integer> transaction_cntr = null;
+		transaction_cntr = asyncService.writeTransaction(transaction);
+		//   writes a sorted set to be used as the posted date index
 
+		return transaction_cntr;
+	}
 
+	public void saveSampleAccount() throws ParseException, RedisCommandExecutionException {
+		Date create_date = new SimpleDateFormat("yyyy.MM.dd").parse("2010.03.28");
+		Account account = new Account("cust001", "acct001",
+				"credit", "teller", "active",
+				"ccnumber666655", create_date.getTime(),
+				null, null, null, null);
+		accountRepository.create(account);
+	}
 	public CompletableFuture<Integer>  writeAccountTransactions (List<Transaction> transactionList) throws IllegalAccessException, ExecutionException, InterruptedException {
 
 		CompletableFuture<Integer> returnVal = null;
 		returnVal = asyncService.writeAccountTransactions(transactionList);
 		return returnVal;
 	}
-
 	private  List<Account> createCustomerAccount(int noOfCustomers, String key_suffix) throws ExecutionException, InterruptedException, RedisCommandExecutionException {
 
 		logger.info("Creating " + noOfCustomers + " customers with accounts and suffix " + key_suffix);
@@ -368,7 +270,7 @@ public class BankService {
 		List<Account> accounts = null;
 		List<Account> allAccounts = new ArrayList<>();
 		List<Email> emails = null;
-		List<PhoneNumber> phoneNumbers = null;
+		List<Phone> phoneNumbers = null;
 		CompletableFuture<Integer> account_cntr = null;
 		CompletableFuture<Integer> customer_cntr = null;
 		CompletableFuture<Integer> email_cntr = null;
@@ -380,11 +282,13 @@ public class BankService {
 		for (int i=0; i < noOfCustomers; i++){
 			logger.info("int noOfCustomer for loop i=" + i);
 			Customer customer = BankGenerator.createRandomCustomer(key_suffix);
-			for (PhoneNumber phoneNumber : phoneNumbers = customer.getCustomerPhones()) {
+			List<Email> emailList = BankGenerator.createEmail(customer.getCustomerId());
+			List<Phone> phoneList = BankGenerator.createPhone(customer.getCustomerId());
+			for (Phone phoneNumber : phoneNumbers = phoneList) {
 				phone_cntr = asyncService.writePhone(phoneNumber);
 			}
 			totalPhone = totalPhone + phoneNumbers.size();
-			for (Email email: emails = customer.getCustomerEmails()) {
+			for (Email email: emails = emailList) {
 				email_cntr = asyncService.writeEmail(email);
 			}
 			totalEmails = totalEmails + emails.size();
@@ -406,22 +310,48 @@ public class BankService {
 		custTimer.end();
 		logger.info("Customers=" + noOfCustomers + " Accounts=" + totalAccounts +
 				" Emails=" + totalEmails + " Phones=" + totalPhone + " in " +
-				   custTimer.getTimeTakenSeconds() + " secs");
+				custTimer.getTimeTakenSeconds() + " secs");
 		return allAccounts;
 	}
+	public void saveSampleTransaction() throws ParseException, RedisCommandExecutionException {
+		Date settle_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.28");
+		Date post_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.28");
+		Date init_date = new SimpleDateFormat("yyyy.MM.dd").parse("2021.07.27");
 
-	 */
+		Merchant merchant = new Merchant("Cub Foods", "5411",
+				"Grocery Stores", "MN", "US");
+		logger.info("before save merchant");
+		merchantRepository.create(merchant);
 
-	private void sleep(int i) {
-		try {
-			Thread.sleep(i);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		Transaction transaction = new Transaction("1234", "acct01",
+				"Debit", merchant.getName() + ":" + "acct01", "referenceKeyType",
+				"referenceKeyValue", "323.23",  "323.22", "1631",
+				"Test Transaction", init_date.getTime(), settle_date.getTime(), post_date.getTime(),
+				"POSTED", null, "ATM665", "Outdoor");
+		logger.info("before save transaction");
+		writeTransaction(transaction);
+	}
+	public String testPipeline(Integer noOfRecords) {
+		BankGenerator.Timer pipelineTimer = new BankGenerator.Timer();
+		redisTemplateRepository.getWriteTemplate().executePipelined(new RedisCallback<Object>() {
+			@Override
+			public Object doInRedis(RedisConnection connection)
+					throws DataAccessException {
+				connection.openPipeline();
+				String keyAndValue=null;
+				for (int index=0;index<noOfRecords;index++) {
+					keyAndValue = "Silly"+index;
+					connection.set(keyAndValue.getBytes(), keyAndValue.getBytes());
+				}
+				connection.closePipeline();
+				return null;
+			}
+		});
+		pipelineTimer.end();
+		logger.info("Finished writing " + noOfRecords + " created in " +
+				pipelineTimer.getTimeTakenSeconds() + " seconds.");
+		return "Done";
 	}
 
-	public void postCustomer(Customer customer) {
-		logger.info("in postCustomer with Customer =" + customer);
-		customerRepository.create(customer);
-	}
+
 }

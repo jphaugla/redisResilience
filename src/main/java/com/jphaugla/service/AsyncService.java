@@ -1,6 +1,7 @@
 package com.jphaugla.service;
 
 import com.jphaugla.domain.*;
+import com.jphaugla.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
@@ -22,59 +23,66 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 public class AsyncService {
-/*
-
-    @Qualifier("strRedisTemplate1")
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private AccountRepository accountRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
+    @Autowired
+    private PhoneRepository phoneRepository;
+    @Autowired
+    private EmailRepository emailRepository;
+    @Autowired
+    private RedisTemplateRepository redisTemplateRepository;
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeAllTransaction(List<Transaction> transactions) {
-        transactionRepository.saveAll(transactions);
+        transactionRepository.createAll(transactions);
         return CompletableFuture.completedFuture(0);
     }
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeTransaction(Transaction transaction) {
-        transactionRepository.save(transaction);
+        transactionRepository.create(transaction);
         return CompletableFuture.completedFuture(0);
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeAllAccounts(List<Account> accounts){
         // Integer count = accounts.size();
-        accountRepository.saveAll(accounts);
+        accountRepository.createAll(accounts);
         return CompletableFuture.completedFuture(0);
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeAccounts(Account account){
         // Integer count = accounts.size();
-        accountRepository.save(account);
+        accountRepository.create(account);
         return CompletableFuture.completedFuture(0);
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeCustomer(Customer customer) {
-        customerRepository.save(customer);
+        customerRepository.create(customer);
         return CompletableFuture.completedFuture(0);
     }
 
     @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Integer> writePhone(PhoneNumber phoneNumber) {
-        phoneRepository.save(phoneNumber);
+    public CompletableFuture<Integer> writePhone(Phone phoneNumber) {
+        phoneRepository.create(phoneNumber);
         return CompletableFuture.completedFuture(0);
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Integer> writeEmail(Email email) {
-        emailRepository.save(email);
+        emailRepository.create(email);
         return CompletableFuture.completedFuture(0);
     }
 
     public void writeTransactionList(List<Transaction> transactionList) {
 
         HashMapper<Object, byte[], byte[]> mapper = new ObjectHashMapper();
-        this.redisTemplate.executePipelined(new RedisCallback<Object>() {
+        this.redisTemplateRepository.getWriteTemplate().executePipelined(new RedisCallback<Object>() {
             @Override
             public Object doInRedis(RedisConnection connection)
                     throws DataAccessException {
@@ -94,7 +102,7 @@ public class AsyncService {
     public void writePostedDateIndex(List<Transaction> transactionList) {
 
         HashMapper<Object, byte[], byte[]> mapper = new ObjectHashMapper();
-        this.redisTemplate.executePipelined(new RedisCallback<Object>() {
+        this.redisTemplateRepository.getWriteTemplate().executePipelined(new RedisCallback<Object>() {
             @Override
             public Object doInRedis(RedisConnection connection)
                     throws DataAccessException {
@@ -103,7 +111,7 @@ public class AsyncService {
                 for (Transaction tx : transactionList) {
                     if(tx.getPostingDate() != null) {
                         String keyname="Trans:PostDate:" + tx.getAccountNo();
-                        connection.zAdd(keyname.getBytes(),  tx.getPostingDate().getTime(),
+                        connection.zAdd(keyname.getBytes(),  tx.getPostingDate(),
                                 tx.getTranId().getBytes());
                     }
                 }
@@ -132,7 +140,4 @@ public class AsyncService {
         }
         return CompletableFuture.completedFuture(0);
     }
-
-
- */
 }

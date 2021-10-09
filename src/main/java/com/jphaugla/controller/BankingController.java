@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 
 import com.jphaugla.domain.*;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,13 @@ public class BankingController {
 	private BankService bankService = BankService.getInstance();
 
 	private static final Logger logger = LoggerFactory.getLogger(BankingController.class);
-	/*
+	// customer
+	@RequestMapping("/save_customer")
+	public String saveCustomer() throws ParseException {
+		bankService.saveSampleCustomer();
+		return "Done";
+	}
+
 
 	//  account
 	@RequestMapping("/save_account")
@@ -61,45 +66,23 @@ public class BankingController {
 		return "Done";
 	}
 
-	@GetMapping("/customerByPhone")
-
-	public Customer getCustomerByPhone(@RequestParam String phoneString) {
-		logger.debug("In get customerByPhone with phone as " + phoneString);
-		return bankService.getCustomerByPhone(phoneString);
-	}
-
-	@GetMapping("/customerByEmail")
-
-	public Customer getCustomerByEmail(@RequestParam String email) {
-		logger.debug("IN get customerByEmail, email is " + email);
-		return bankService.getCustomerByEmail(email);
-	}
-
-	@GetMapping("/returned_transactions")
-
-	public List<String> getReturnedTransaction () {
-		List<String> returnsCount = new ArrayList<>();
-		returnsCount = bankService.getTransactionReturns();
-		return returnsCount;
-	}
-
 	@GetMapping("/getTransaction")
 	public Transaction getTransaction(@RequestParam String transactionID) {
 		Transaction transaction = bankService.getTransaction(transactionID);
 		return transaction;
 	}
 
-	 */
+
 	@GetMapping("/customer")
 
 	public Optional<Customer> getCustomer(@RequestParam String customerId) {
 		return bankService.getCustomer(customerId);
 	}
-	// customer
-	@RequestMapping("/save_customer")
-	public String saveCustomer() throws ParseException {
-		bankService.saveSampleCustomer();
-		return "Done";
+
+	@GetMapping("/deleteCustomerEmail")
+
+	public int deleteCustomerEmail(@RequestParam String customerId) {
+		return bankService.deleteCustomerEmail(customerId);
 	}
 
 	@PostMapping(value = "/postCustomer", consumes = "application/json", produces = "application/json")
@@ -107,7 +90,6 @@ public class BankingController {
 		bankService.postCustomer(customer);
 		return "Done\n";
 	}
-
 	@GetMapping("/startConnect")
 	public void startLoop() throws InterruptedException {
 		bankService.startRedisWrite();
@@ -117,6 +99,10 @@ public class BankingController {
 	public void switchRedis() throws InterruptedException {
 		bankService.switchTemplate("key1", "key1");
 	}
+
+
+
+
 
 
 }

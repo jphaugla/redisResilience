@@ -13,19 +13,16 @@ import java.util.Date;
 @Getter
 @Setter
 
-@RedisHash("Account")
-
-
 public class Account {
-    private @Id String accountNo;
+    private String accountNo;
     private String customerId;
     private String accountType;
     private String accountOriginSystem;
     private String accountStatus;
     private String cardNum;
-    private Date openDate;
-    private Date lastUpdated;
+    private Long openDate;
+    private Long lastUpdated;
     private String lastUpdatedBy;
     private String createdBy;
-    private Date createdDate;
+    private Long createdDate;
 }

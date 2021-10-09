@@ -7,7 +7,6 @@ import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
@@ -56,17 +55,5 @@ public class CustomerRepository {
 		Customer customer = mapper.convertValue(customerHash, Customer.class);
 		return (customer);
 	}
-	// likely, not needed
-	public String createCallBack(Customer customer, Exception exception) {
-		//  this gets called back with every exception but only do the switch
-		//  when it is called by the called not permitted exception (circuit breaker open)
-		logger.info("createCallBack with exception " + exception.getMessage());
-		return exception.getMessage();
-	}
-	public Customer getCallBack(String customerId, Exception exception) {
-		//  this gets called back with every exception but only do the switch
-		//  when it is called by the called not permitted exception (circuit breaker open)
-		logger.info("getCallBack with exception " + exception.getMessage());
-		return (null);
-	}
+
 }

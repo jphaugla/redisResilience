@@ -32,7 +32,29 @@ public class BankGenerator {
 	public static String getRandomCustomerId(int noOfCustomers){
 		return BASE + new Double(Math.random()*noOfCustomers).intValue() + "";
 	}
-	
+
+	public static List<Email> createEmail (String customerId) {
+		Email home_email = new Email(customerId + "@gmail.com","home", customerId);
+		Email work_email = new Email(customerId + "@BigCompany.com","work", customerId);
+		List<Email> emailList;
+		emailList = new ArrayList<Email>();
+		emailList.add(home_email);
+		emailList.add(work_email);
+		return emailList;
+	}
+
+	public static List<Phone> createPhone (String customerId) {
+		Phone home_phone = new Phone(customerId + "h", "home", customerId);
+		Phone cell_phone = new Phone(customerId + "c", "cell", customerId);
+		Phone workPhone = new Phone(customerId + "w", "work", customerId);
+		List<Phone> phoneList;
+		phoneList = new ArrayList<Phone>();
+		phoneList.add(home_phone);
+		phoneList.add(cell_phone);
+		phoneList.add(workPhone);
+		return phoneList;
+	}
+
 	public static Customer createRandomCustomer(String key_suffix) {
 		
 		String customerIdInt = BASE + customerIdGenerator.getAndIncrement() + "";
@@ -43,8 +65,8 @@ public class BankGenerator {
 
 		customer.setAddressLine1("Line1-" + customerId);
 		customer.setCreatedBy("Java Test");
-        	customer.setLastUpdatedBy("Java Test");
-        	customer.setCustomerType("Retail");
+        customer.setLastUpdatedBy("Java Test");
+        customer.setCustomerType("Retail");
 
 		customer.setCreatedDatetime(currentDate.getTime());
 		customer.setLastUpdated(currentDate.getTime());
@@ -52,8 +74,8 @@ public class BankGenerator {
 		customer.setCustomerOriginSystem("RCIF");
 		customer.setCustomerStatus("A");
 		customer.setCountryCode("00");
-        	customer.setGovernmentId("TIN");
-        	customer.setGovernmentIdType(customerIdInt.substring(1));
+        customer.setGovernmentId("TIN");
+        customer.setGovernmentIdType(customerIdInt.substring(1));
 
 		int lastDigit = Integer.parseInt(customerIdInt.substring(6));
 		if (lastDigit>7) {
@@ -89,6 +111,7 @@ public class BankGenerator {
 		customer.setLastName(lastName);
 		customer.setMiddleName(middleName);
 		customer.setFullName(firstName + " " + middleName + " " + lastName);
+
 
 		return customer;
 	}
@@ -132,8 +155,8 @@ public class BankGenerator {
 			account.setAccountType(accountTypes.get(i));
 			account.setAccountStatus("Open");
             account.setLastUpdatedBy("Java Test");
-            account.setLastUpdated(currentDate);
-            account.setCreatedDate(currentDate);
+            account.setLastUpdated(currentDate.getTime());
+            account.setCreatedDate(currentDate.getTime());
             account.setCreatedBy("Java Test");
 
 
@@ -165,6 +188,7 @@ public class BankGenerator {
 		int randomLocation = (int) doubleRandomLocation;
 
 		Date aNewDate = newDate.toDate();
+		Date oldDate = new Date(0);
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(aNewDate);
 		calendar.add(Calendar.DATE, -1);
@@ -181,14 +205,17 @@ public class BankGenerator {
         String transactionStat = transactionStatus[randomLocation];
         transaction.setStatus(transactionStat);
         if(transactionStat == "POSTED") {
-        	transaction.setPostingDate(aNewDate);
-        	transaction.setSettlementDate(date_minus_one);
-        	transaction.setInitialDate(date_minus_two);
+        	transaction.setPostingDate(aNewDate.getTime());
+        	transaction.setSettlementDate(date_minus_one.getTime());
+        	transaction.setInitialDate(date_minus_two.getTime());
 		} else if (transactionStat == "SETTLED") {
-			transaction.setSettlementDate(aNewDate);
-			transaction.setInitialDate(date_minus_one);
+			transaction.setSettlementDate(aNewDate.getTime());
+			transaction.setInitialDate(date_minus_one.getTime());
+			transaction.setPostingDate(oldDate.getTime());
 		} else {
-			transaction.setInitialDate(aNewDate);
+			transaction.setInitialDate(aNewDate.getTime());
+			transaction.setPostingDate(oldDate.getTime());
+			transaction.setSettlementDate(oldDate.getTime());
 		}
 		transaction.setLocation(location);
 		if(randomLocation<5) {
@@ -272,7 +299,7 @@ public class BankGenerator {
     public static String[] transactionStatus = {"POSTED", "AUTHORIZED", "SETTLED", "POSTED", "POSTED", "POSTED",
 			"POSTED", "POSTED", "POSTED", "POSTED", "POSTED", "POSTED",
 			"POSTED", "POSTED", "POSTED", "POSTED", "POSTED", "POSTED",
-			"POSTED", "POSTED","POSTED","POSTED","POSTED","POSTED","POSTED","POSTED"};
+			"AUTHORIZED", "SETTLED","POSTED","AUTHORIZED","SETTLED","POSTED","POSTED","POSTED"};
 	public static String[] States = {"IL", "MN", "MN", "MN", "MN","CA", "AZ", "AL", "AK", "TX", "WY", "PR",
 			"MN", "IL", "MN", "MN", "IL", "IA", "WI", "SD", "ND", "MD", "CT", "WI", "KS", "IN","DE","TN"
 	 		};
