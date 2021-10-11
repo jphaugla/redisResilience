@@ -4,6 +4,7 @@ import com.jphaugla.domain.Phone;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +35,16 @@ public class PhoneRepository{
 		logger.info("PhoneRepository constructor");
 	}
 
+	@Retry(name = "backendA")
 	public String create(Phone phone) {
 
 		Map<Object, Object> phoneHash = mapper.convertValue(phone, Map.class);
 		redisTemplateRepository.getWriteTemplate().opsForHash().putAll("Phone:" + phone.getPhoneNumber(), phoneHash);
-		// redisTemplate.opsForHash().putAll("Phone:" + phone.getPhoneId(), phoneHash);
-		logger.info(String.format("Phone with ID %s saved", phone.getPhoneNumber()));
+		// logger.info(String.format("Phone with ID %s saved", phone.getPhoneNumber()));
 		return "Success\n";
 	}
 
+	@Retry(name = "backendA")
 	public Optional<Phone> get(String phoneId) {
 		logger.info("in Phone Repository.get with phone id=" + phoneId);
 		String fullKey = "Phone:" + phoneId;

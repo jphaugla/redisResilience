@@ -4,6 +4,7 @@ import com.jphaugla.domain.Transaction;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +35,14 @@ public class TransactionRepository{
 		logger.info("TransactionRepository constructor");
 	}
 
+	@Retry(name = "backendA")
 	public String create(Transaction transaction) {
 		if (transaction.getInitialDate() == null) {
 			Long currentTimeMillis = System.currentTimeMillis();
 			transaction.setInitialDate(currentTimeMillis);
 		}
-
 		Map<Object, Object> transactionHash = mapper.convertValue(transaction, Map.class);
 		redisTemplateRepository.getWriteTemplate().opsForHash().putAll("Transaction:" + transaction.getTranId(), transactionHash);
-		// redisTemplate.opsForHash().putAll("Transaction:" + transaction.getTransactionId(), transactionHash);
 		// logger.info(String.format("Transaction with ID %s saved", transaction.getTranId()));
 		return "Success\n";
 	}

@@ -4,6 +4,7 @@ import com.jphaugla.domain.Email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ public class EmailRepository{
 		logger.info("EmailRepository constructor");
 	}
 
+	@Retry(name = "backendA")
 	public String create(Email email) {
 
 		Map<Object, Object> emailHash = mapper.convertValue(email, Map.class);
@@ -41,10 +43,11 @@ public class EmailRepository{
 		// for demo purposed add a member to the set for the Customer
 		redisTemplateRepository.getReadTemplate().opsForSet().add("CustEmail:" + email.getCustomerId(), email.getEmailAddress());
 		// redisTemplate.opsForHash().putAll("Email:" + email.getEmailId(), emailHash);
-		logger.info(String.format("Email with ID %s saved", email.getEmailAddress()));
+		//  logger.info(String.format("Email with ID %s saved", email.getEmailAddress()));
 		return "Success\n";
 	}
 
+	@Retry(name = "backendA")
 	public Email get(String emailId) {
 		logger.info("in EmailRepository.get with email id=" + emailId);
 		String fullKey = "Email:" + emailId;
@@ -52,13 +55,16 @@ public class EmailRepository{
 		Email email = mapper.convertValue(emailHash, Email.class);
 		return (email);
 	}
-    //  this is sample code demonstrating removing all the emails for a customer without using redisearch
+
+	@Retry(name = "backendA")
+	//  this is sample code demonstrating removing all the emails for a customer without using redisearch
 	public void delete(String emailId) {
 		logger.info("in emailrepository.delete with emailId " + emailId);
 		String fullKey = "Email:" + emailId;
 		redisTemplateRepository.getReadTemplate().delete(fullKey);
 	}
 
+	@Retry(name = "backendA")
 	public int deleteCustomerEmails (String customerId) {
 		logger.info("in EmailRepository.deleteCustomerEmails with custid " + customerId);
 		String custEmailKey = "CustEmail:"+ customerId;

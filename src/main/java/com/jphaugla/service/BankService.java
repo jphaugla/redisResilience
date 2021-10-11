@@ -278,9 +278,9 @@ public class BankService {
 		int totalAccounts = 0;
 		int totalEmails = 0;
 		int totalPhone = 0;
-		logger.info("before the big for loop");
+		// logger.info("before the big for loop");
 		for (int i=0; i < noOfCustomers; i++){
-			logger.info("int noOfCustomer for loop i=" + i);
+			// logger.info("int noOfCustomer for loop i=" + i);
 			Customer customer = BankGenerator.createRandomCustomer(key_suffix);
 			List<Email> emailList = BankGenerator.createEmail(customer.getCustomerId());
 			List<Phone> phoneList = BankGenerator.createPhone(customer.getCustomerId());

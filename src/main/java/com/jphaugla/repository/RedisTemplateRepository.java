@@ -137,13 +137,13 @@ public class RedisTemplateRepository {
 	}
 
 	public RedisTemplate<Object, Object> getWriteTemplate(){
-		logger.info("in getWriteTemplate with redisIndex " + redisIndex);
+		// logger.info("in getWriteTemplate with redisIndex " + redisIndex);
 		RedisTemplate<Object, Object> newTemplate = redisTemplateWriteArray[redisIndex];
 		return newTemplate;
 	}
 
 	public StringRedisTemplate getReadTemplate(){
-		logger.info("in getReadTemplate with redisIndex " + redisIndex);
+		// logger.info("in getReadTemplate with redisIndex " + redisIndex);
 		StringRedisTemplate newStringRedisTemplate = redisTemplateReadArray[redisIndex];
 		return newStringRedisTemplate;
 	}

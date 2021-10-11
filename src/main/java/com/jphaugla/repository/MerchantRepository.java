@@ -5,6 +5,7 @@ import com.jphaugla.domain.Merchant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.jphaugla.domain.Transaction;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,22 +36,24 @@ public class MerchantRepository{
 		logger.info("MerchantRepository constructor");
 	}
 
+	@Retry(name = "backendA")
 	public String create(Merchant merchant) {
 
 		Map<Object, Object> merchantHash = mapper.convertValue(merchant, Map.class);
 		redisTemplateRepository.getWriteTemplate().opsForHash().putAll("Merchant:" + merchant.getName(), merchantHash);
-		// redisTemplate.opsForHash().putAll("Merchant:" + merchant.getMerchantId(), merchantHash);
-		logger.info(String.format("Merchant with ID %s saved", merchant.getName()));
+		// logger.info(String.format("Merchant with ID %s saved", merchant.getName()));
 		return "Success\n";
 	}
 
+	@Retry(name = "backendA")
 	public Merchant get(String merchantId) {
-		logger.info("in MerchantRepository.get with merchant id=" + merchantId);
+		// logger.info("in MerchantRepository.get with merchant id=" + merchantId);
 		String fullKey = "Merchant:" + merchantId;
 		Map<Object, Object> merchantHash = redisTemplateRepository.getReadTemplate().opsForHash().entries(fullKey);
 		Merchant merchant = mapper.convertValue(merchantHash, Merchant.class);
 		return (merchant);
 	}
+
 	public String createAll(List<Merchant> merchantList) {
 		for (Merchant merchant : merchantList) {
 			create(merchant);

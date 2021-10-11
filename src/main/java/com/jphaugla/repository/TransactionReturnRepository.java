@@ -5,6 +5,7 @@ import com.jphaugla.domain.TransactionReturn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +36,11 @@ public class TransactionReturnRepository{
 		logger.info("TransactionReturnRepository constructor");
 	}
 
+	@Retry(name = "backendA")
 	public String create(TransactionReturn transactionReturn) {
 		Map<Object, Object> transactionReturnHash = mapper.convertValue(transactionReturn, Map.class);
 		redisTemplateRepository.getWriteTemplate().opsForHash().putAll("TransactionReturn:" + transactionReturn.getReasonCode(), transactionReturnHash);
-		// redisTemplate.opsForHash().putAll("TransactionReturn:" + transactionReturn.getTransactionReturnId(), transactionReturnHash);
-		logger.info(String.format("TransactionReturn with ID %s saved", transactionReturn.getReasonCode()));
+		// logger.info(String.format("TransactionReturn with ID %s saved", transactionReturn.getReasonCode()));
 		return "Success\n";
 	}
 	public String createAll(List<TransactionReturn> transactionReturnList) {
@@ -49,6 +50,7 @@ public class TransactionReturnRepository{
 		return "Success\n";
 	}
 
+	@Retry(name = "backendA")
 	public TransactionReturn get(String transactionReturnId) {
 		logger.info("in TransactionReturnRepository.get with transactionReturn id=" + transactionReturnId);
 		String fullKey = "TransactionReturn:" + transactionReturnId;

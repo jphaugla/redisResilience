@@ -38,22 +38,22 @@ public class AccountRepository {
 		SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 		Long millis = System.currentTimeMillis();
 		Date date = new Date(millis);
-		logger.info("in accountrepository.create with accountID " + account.getAccountNo() + " " + date);
-		logger.info("redis index is" + redisTemplateRepository.getRedisIndex());
+		// logger.info("in accountrepository.create with accountID " + account.getAccountNo() + " " + date);
+		// logger.info("redis index is " + redisTemplateRepository.getRedisIndex());
 		if (account.getCreatedDate() == null) {
 			account.setCreatedDate(millis);
 			account.setLastUpdated(millis);
 		}
 		Map<Object, Account> accountHash = mapper.convertValue(account, Map.class);
 		redisTemplateRepository.getWriteTemplate().opsForHash().putAll("Account:" + account.getAccountNo(), accountHash);
-		logger.info(String.format("Account with ID %s saved", account.getAccountNo()));
+		// logger.info(String.format("Account with ID %s saved", account.getAccountNo()));
 		return "Success\n";
 	}
 
 	@Retry(name = "backendA")
 	public Account get(String accountId) {
-		logger.info("in AccountRepository.get with account id=" + accountId);
-		logger.info("redis index is" + redisTemplateRepository.getRedisIndex());
+	//	logger.info("in AccountRepository.get with account id=" + accountId);
+	//	logger.info("redis index is " + redisTemplateRepository.getRedisIndex());
 		String fullKey = "Account:" + accountId;
 		Map<Object, Object> accountHash = redisTemplateRepository.getReadTemplate().opsForHash().entries(fullKey);
 		// Map<Object, Object> accountHash = redisTemplate1.opsForHash().entries(fullKey);
