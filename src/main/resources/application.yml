@@ -59,10 +59,10 @@ spring:
     autoconfigure:
         exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
     redis:
-        host: localhost
-        host2: localhost
-        port: 6379
-        port2: 6380
+        host: ${REDIS_HOST1}
+        host2: ${REDIS_HOST2}
+        port: ${REDIS_PORT1}
+        port2: ${REDIS_PORT2}
         timeout: 1000ms
         testkey: testKey
         connectionLoopInterval: 1000

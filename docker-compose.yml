@@ -18,20 +18,20 @@ services:
         ipv4_address: 172.22.0.11
 
   #Node 2
-  re2:
-    image: redislabs/redis:latest
-    #image: redislabs/redis-internal:100.0.2-6840
-    container_name: re2
-    restart: unless-stopped
-    tty: true
-    cap_add: 
-      - ALL
-    volumes:
-      - ./:/home
-    dns: 172.22.0.20
-    networks:
-      re_cluster:
-        ipv4_address: 172.22.0.12
+#  re2:
+#    image: redislabs/redis:latest
+#    #image: redislabs/redis-internal:100.0.2-6840
+#    container_name: re2
+#    restart: unless-stopped
+#    tty: true
+#    cap_add: 
+#      - ALL
+#    volumes:
+#      - ./:/home
+#    dns: 172.22.0.20
+#    networks:
+#      re_cluster:
+#        ipv4_address: 172.22.0.12
 
   #Node 3
   re3:
@@ -50,20 +50,20 @@ services:
         ipv4_address: 172.22.0.13
 
   #Node 4
-  re4:
-    image: redislabs/redis:latest
-    #image: redislabs/redis-internal:100.0.2-6840
-    container_name: re4
-    restart: unless-stopped
-    tty: true
-    cap_add: 
-      - ALL 
-    volumes:
-      - ./:/home
-    dns: 172.22.0.20
-    networks:
-      re_cluster:
-        ipv4_address: 172.22.0.14
+#  re4:
+#    image: redislabs/redis:latest
+#    #image: redislabs/redis-internal:100.0.2-6840
+#    container_name: re4
+#    restart: unless-stopped
+#    tty: true
+#    cap_add: 
+#      - ALL 
+#    volumes:
+#      - ./:/home
+#    dns: 172.22.0.20
+#    networks:
+#      re_cluster:
+#        ipv4_address: 172.22.0.14
 
   #dns for the docker network
   bind:
@@ -78,6 +78,31 @@ services:
     networks:
       re_cluster:
         ipv4_address: 172.22.0.20
+
+  bankapp:
+    image: bankapp
+    # image: jphaugla/bankapp:latest
+    container_name: bankapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    volumes:
+      - "./app/:/usr/src/app"
+    environment:
+      - REDIS_HOST1=cluster-1.redis-enterprise.com
+      - REDIS_HOST2=cluster-2.redis-enterprise.com
+      - REDIS_PORT1=12000
+      - REDIS_PORT2=12000
+      - CORE_POOLSIZE=20
+    depends_on:
+      - re1
+      - re3
+    dns: 172.22.0.20
+    networks:
+      re_cluster:
+        ipv4_address: 172.22.0.21
 
 #Docker Networks
 networks:
