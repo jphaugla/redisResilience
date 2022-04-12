@@ -46,16 +46,21 @@ The java code demonstrates common API actions with the data layer in REDIS.  The
 <a href="" rel="Tables Structures Used"><img src="images/Tables.png" alt="" /></a>
 
 ## Getting Started
-1. Prepare Docker environment-see the Prerequisites section above...
-2. Pull this github into a directory
+* Prepare Docker environment-see the Prerequisites section above...
+* Pull this github into a directory
 ```bash
 git clone https://github.com/jphaugla/redisResilience
 ```
-3. Refer to the notes for redis Docker images used but don't get too bogged down as docker compose handles everything except for a few admin steps on tomcat.
- * [https://hub.docker.com/r/bitnami/redis/](https://hub.docker.com/r/bitnami/redis/)  
-4. Open terminal and change to the github home where you will see the docker-compose.yml file, then: 
+* Open terminal and change to the github home where you will see the docker-compose.yml file
+  * If docker resources are limited, comment out nodes re2 and re4 in the docker compose file.
 ```bash
 docker-compose up -d
+```
+* Setup the redis enterprise cluster and create the active/active database
+  * if docker resources are limited, comment out the lines for nodes re2 and re4
+```bash
+./setup-2AA.sh
+./crdcreate.sh
 ```
 
 ## To execute the code

@@ -1,0 +1,22 @@
+$TTL 5
+$ORIGIN redis-enterprise.com.
+@               IN SOA ns admin (
+                        1591031964
+                        10800
+                        3600
+                        604800
+                        38400 )
+                IN NS ns
+
+ns            IN    A    172.22.0.20
+
+n1.cluster            IN    A    172.22.0.11
+n2.cluster            IN    A    172.22.0.12
+n3.cluster            IN    A    172.22.0.13
+n4.cluster            IN    A    172.22.0.14
+
+cluster-1        IN    NS    n1.cluster
+cluster-1        IN    NS    n2.cluster
+
+cluster-2        IN    NS    n3.cluster
+cluster-2        IN    NS    n4.cluster
