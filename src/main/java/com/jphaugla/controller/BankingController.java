@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.jphaugla.domain.*;
 
-import com.jphaugla.service.MessageProducer;
+import com.jphaugla.service.Messaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class BankingController {
 	@Autowired
 	private BankService bankService = BankService.getInstance();
 	@Autowired
-	private MessageProducer messageProducer;
+	private Messaging messaging;
 
 	private static final Logger logger = LoggerFactory.getLogger(BankingController.class);
 
@@ -96,7 +96,7 @@ public class BankingController {
 	@PostMapping(value = "/postSecurityKey", consumes = "application/json", produces = "application/json")
 	public RecordId postCustomer(@RequestBody User user ) throws ParseException {
 		logger.info("in BankingController.postSecurityKey with username and password " + user.getUsername() + "/" + user.getPassword());
-		RecordId recordId = messageProducer.postSecurityKey(user.getUsername(), user.getPassword());
+		RecordId recordId = messaging.postSecurityKey(user.getUsername(), user.getPassword());
 		return recordId;
 	}
 

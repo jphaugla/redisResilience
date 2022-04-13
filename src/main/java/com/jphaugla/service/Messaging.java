@@ -1,6 +1,7 @@
 package com.jphaugla.service;
 
 import com.jphaugla.repository.RedisTemplateRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class MessageProducer {
+public class Messaging {
     private static final Logger logger = LoggerFactory.getLogger(BankService.class);
     public final static String STREAMS_KEY = "PASSWORD";
     @Autowired
