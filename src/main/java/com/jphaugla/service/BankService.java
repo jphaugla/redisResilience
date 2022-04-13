@@ -69,6 +69,8 @@ public class BankService {
 	private static final Logger logger = LoggerFactory.getLogger(BankService.class);
 	private static final String BREAKER_REDIS="breakerRedis";
 
+
+
 	private long timerSum = 0;
 	private AtomicLong timerCount= new AtomicLong();
 	
@@ -352,6 +354,4 @@ public class BankService {
 				pipelineTimer.getTimeTakenSeconds() + " seconds.");
 		return "Done";
 	}
-
-
 }

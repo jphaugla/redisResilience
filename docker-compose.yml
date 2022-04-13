@@ -10,7 +10,11 @@ services:
     tty: true
     cap_add: 
       - ALL
+    ports: 
+      - "8443:8443"
+      - "12000:12000"
     volumes:
+#       - ./redispersN1:/var/opt/redislabs/persist
       - ./:/home
     dns: 172.22.0.20
     networks:
@@ -26,8 +30,12 @@ services:
 #    tty: true
 #    cap_add: 
 #      - ALL
+#    ports: 
+#      - "28443:8443"
+#      - "12002:12000"
 #    volumes:
 #      - ./:/home
+#      - ./redispersN2:/var/opt/redislabs/persist
 #    dns: 172.22.0.20
 #    networks:
 #      re_cluster:
@@ -42,7 +50,11 @@ services:
     tty: true
     cap_add: 
       - ALL 
+    ports: 
+      - "38443:8443"
+      - "12003:12000"
     volumes:
+#     - ./redispersN3:/var/opt/redislabs/persist
       - ./:/home
     dns: 172.22.0.20
     networks:
@@ -58,8 +70,12 @@ services:
 #    tty: true
 #    cap_add: 
 #      - ALL 
+#    ports: 
+#      - "48443:8443"
+#      - "12004:12000"
 #    volumes:
 #      - ./:/home
+#      - ./redispersN4:/var/opt/redislabs/persist
 #    dns: 172.22.0.20
 #    networks:
 #      re_cluster:

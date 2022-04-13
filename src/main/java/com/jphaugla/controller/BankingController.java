@@ -6,10 +6,11 @@ import java.util.concurrent.ExecutionException;
 
 import com.jphaugla.domain.*;
 
+import com.jphaugla.service.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.web.bind.annotation.*;
 
 import com.jphaugla.service.BankService;
@@ -20,8 +21,11 @@ public class BankingController {
 
 	@Autowired
 	private BankService bankService = BankService.getInstance();
+	@Autowired
+	private MessageProducer messageProducer;
 
 	private static final Logger logger = LoggerFactory.getLogger(BankingController.class);
+
 	// customer
 	@RequestMapping("/save_customer")
 	public String saveCustomer() throws ParseException {
@@ -74,13 +78,11 @@ public class BankingController {
 
 
 	@GetMapping("/customer")
-
 	public Optional<Customer> getCustomer(@RequestParam String customerId) {
 		return bankService.getCustomer(customerId);
 	}
 
 	@GetMapping("/deleteCustomerEmail")
-
 	public int deleteCustomerEmail(@RequestParam String customerId) {
 		return bankService.deleteCustomerEmail(customerId);
 	}
@@ -90,6 +92,14 @@ public class BankingController {
 		bankService.postCustomer(customer);
 		return "Done\n";
 	}
+
+	@PostMapping(value = "/postSecurityKey", consumes = "application/json", produces = "application/json")
+	public RecordId postCustomer(@RequestBody User user ) throws ParseException {
+		logger.info("in BankingController.postSecurityKey with username and password " + user.getUsername() + "/" + user.getPassword());
+		RecordId recordId = messageProducer.postSecurityKey(user.getUsername(), user.getPassword());
+		return recordId;
+	}
+
 	@GetMapping("/startConnect")
 	public void startLoop() throws InterruptedException {
 		bankService.startRedisWrite();
@@ -99,10 +109,5 @@ public class BankingController {
 	public void switchRedis() throws InterruptedException {
 		bankService.switchTemplate("key1", "key1");
 	}
-
-
-
-
-
 
 }

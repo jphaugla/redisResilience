@@ -62,20 +62,25 @@ docker-compose up -d
 ./setup-2AA.sh
 ./crdcreate.sh
 ```
-
-## To execute the code
+* bringing up the docker compose will attempt to start the java container called bankapp.  However, this will fail because the database was not yet created.
+* restart the bankapp and it should work now that cluster is created and database is created
+```bash
+docker-compose start bankapp
+```
+## To execute the code from command line
 (Alternatively, this can be run through intelli4j)
 
-1. Compile the code
+* Compile the code
 ```bash
 mvn package
 ```
-2.  run the jar file.   
+* set the environment variables to match those in docker-compose 
+* run the jar file.   
 ```bash
 java -jar target/redis-0.0.1-SNAPSHOT.jar
 ```
-3. Note:  parameters for the circuit breaker and retry are in the application.yml.  For the circuit breaker, the code reads all the default values such as:  resilience4j.circuitbreaker.configs.default.failureRateThreshold.  However, the waitDurationInOpenState has an odd error so added waitDurationInOpenStateInt.  
-4. Once the solution is running do a test write
+* Note:  parameters for the circuit breaker and retry are in the application.yml.  For the circuit breaker, the code reads all the default values such as:  resilience4j.circuitbreaker.configs.default.failureRateThreshold.  However, the waitDurationInOpenState has an odd error so added waitDurationInOpenStateInt.  
+* Once the solution is running do a test write
 ```bash
 cd scripts
 ./saveCustomer.sh 
@@ -87,13 +92,13 @@ Done%
 ```
 6. Now do each of these relatively quickly so, the failover completes before the retry is expired on the write. 
 ```bash
-docker stop redis1
+docker stop re1
 ./saveCustomer.sh
 ```
 NOTE:   Because redis1 stopped, the circuit breaker will kick in on the failure of the write to redis in the connection loop.  This will call the circuit breaker to go to its callback routine.  This callback routine will do a failover once the circuit break opens.  At the same time, the client write will retry until successful or maximum retries occur
 7. re-start redis1
 ```bash
-docker start redis1
+docker start re1
 ```
 8. switch back is a manual process
 ```bash
