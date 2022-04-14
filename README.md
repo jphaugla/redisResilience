@@ -86,21 +86,30 @@ cd scripts
 ./saveCustomer.sh 
 Done%                                                
 ```
-5. Start the connection loop test running with this API call script
+## Test Connection Loop
+* Start the connection loop test running with this API call script
 ```bash
 ./startConnectionLoop.sh
 ```
-6. Now do each of these relatively quickly so, the failover completes before the retry is expired on the write. 
+* Now do each of these relatively quickly so, the failover completes before the retry is expired on the write. 
 ```bash
 docker stop re1
 ./saveCustomer.sh
 ```
 NOTE:   Because redis1 stopped, the circuit breaker will kick in on the failure of the write to redis in the connection loop.  This will call the circuit breaker to go to its callback routine.  This callback routine will do a failover once the circuit break opens.  At the same time, the client write will retry until successful or maximum retries occur
-7. re-start redis1
+* re-start redis1
 ```bash
 docker start re1
 ```
-8. switch back is a manual process
+* switch back is a manual process
 ```bash
 ./switchRedis.sh
 ```
+## Test password rotation
+* Password rotation tests the ability in an active/active deployment to rotate passwords ensure the same password is used on all instances.
+* To ensure all instances have received the password change, a Redis Streams listener is running on each crdb instance.
+* When a password change is made, the username, the password, and the timestamp is added to a Redis Stream for the username.  Each username will have its own Redis Stream.
+* When each CRDB instance listener receives the Redis Streams message, it increments a sorted set score for the paasword member.
+* For the getPassword API call, the password score must be the same as the number of crdb instances.  So, if there are 5 instances the password score must be 5 to ensure all 5 CRDB instances have the password value
+* In case there are multiple passwords with the optimal score, only the most recently updated value is returned using the Redis Stream
+* Cleanup API will remove old passwords

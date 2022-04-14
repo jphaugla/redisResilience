@@ -40,8 +40,8 @@ public class UserRepository {
 	public User get(String username) {
 		logger.info("in UserRepository.get with username=" + username);
 		String fullKey = KEY + username;
-		Map<Object, Object> emailHash = redisTemplateRepository.getReadTemplate().opsForHash().entries(fullKey);
-		User user = mapper.convertValue(emailHash, User.class);
+		Map<Object, Object> userHash = redisTemplateRepository.getReadTemplate().opsForHash().entries(fullKey);
+		User user = mapper.convertValue(userHash, User.class);
 		return (user);
 	}
 

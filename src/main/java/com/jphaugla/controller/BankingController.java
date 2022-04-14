@@ -99,6 +99,11 @@ public class BankingController {
 		RecordId recordId = messaging.postSecurityKey(user.getUsername(), user.getPassword());
 		return recordId;
 	}
+	@GetMapping("/getSecurityKey")
+	public String getPassword (@RequestParam String username, @RequestParam Integer number_instances) {
+		logger.info("in BankingController.getSecurityKey with username " + username + " number instances " + number_instances);
+		return messaging.getPassword(username, number_instances);
+	}
 
 	@GetMapping("/startConnect")
 	public void startLoop() throws InterruptedException {
