@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+
+  consumer:
+    image: consumer
+    # image: jphaugla/bankapp:latest
+    container_name: consumer
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    volumes:
+      - "./app/:/usr/src/app"
+    environment:
+      - REDIS_URI=redis://redis-12000.cluster-1.redis-enterprise.com:12000
+      # - REDIS_URI=redis://redis-12000.cluster-2.redis-enterprise.com:12000
+      - STREAMS_KEY=STREAMS:USER:ralph
+    depends_on:
+      - re1
+      - re3
+      - bankapp
+    dns: 172.22.0.20
+    networks:
+      re_cluster:
+        ipv4_address: 172.22.0.22

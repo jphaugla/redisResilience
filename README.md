@@ -56,6 +56,7 @@ git clone https://github.com/jphaugla/redisResilience
 ```bash
 docker-compose up -d
 ```
+NOTE:   There is a second docker-compose-consumer.yml file.   I was not able to get this to work to run the consumer under the same docker-compose setup.   Not sure if it is a resource issue on my mac or a network issue with the second yaml file.  For now, the consumer needs to be run outside of docker
 * Setup the redis enterprise cluster and create the active/active database
   * if docker resources are limited, comment out the lines for nodes re2 and re4
 ```bash
