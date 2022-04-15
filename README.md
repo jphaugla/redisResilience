@@ -105,7 +105,7 @@ docker start re1
 ```bash
 ./switchRedis.sh
 ```
-## Test password rotation
+## Password rotation
 * Password rotation tests the ability in an active/active deployment to rotate passwords ensure the same password is used on all instances.
 * To ensure all instances have received the password change, a Redis Streams listener is running on each crdb instance.
 * When a password change is made, the username, the password, and the timestamp is added to a Redis Stream for the username.  Each username will have its own Redis Stream.
@@ -113,3 +113,42 @@ docker start re1
 * For the getPassword API call, the password score must be the same as the number of crdb instances.  So, if there are 5 instances the password score must be 5 to ensure all 5 CRDB instances have the password value
 * In case there are multiple passwords with the optimal score, only the most recently updated value is returned using the Redis Stream
 * Cleanup API will remove old passwords
+
+## Test Password Rotation
+* In addition to the normal startup tasks, a consumer needs to be started consuming off the stream in each of the CRDB instances.
+```bash
+export REDIS_URL=redis://localhost:12000
+#  user must match the user in password.json in subsequent step
+export STREAMS_KEY=STREAM:USER:ralph
+cd consumer
+mvn package 
+./runconsumer.sh
+```
+```bash
+export REDIS_URL=redis://localhost:12001
+#  user must match the user in password.json in subsequent step
+export STREAMS_KEY=STREAM:USER:ralph
+cd consumer
+mvn package
+./runconsumer.sh
+```
+* create a new password
+```bash
+cd ../scripts
+./putPassword.sh
+./getPassword.sh
+```
+* edit the ./scripts/password.json to add a new password
+* create the new password and now should get the newerPassword on the get.   Check the logs to see what is happening
+```bash
+./putPassword.sh
+./getPassword.sh
+```
+* now try the step of adding a third password but take down one of the nodes first
+```bash
+docker-compose stop re2
+./putPassword.sh
+#  make sure this script has targetinstance set to the number of instances
+./getPassword.sh
+```
+Should return the seconrd and not the third parameter
