@@ -10,14 +10,14 @@ This code is derived from Digital Banking github using redistemplate. The focus 
   - [Create Environment](#create-environment)
   - [Multiple Deployment options](#multiple-options-for-creating-the-environment)
   - [Docker Compose](#docker-compose-startup)
-    - [Setup Redis](#setup-redis-enterprise-cluster-and-database)
-    - [Start Ticker Load](#start-ticker-load)
-  - [Run Java on Unix](#run-local-java)
+    - [Setup Redis](#setup-redis-enterprise-cluster-and-db)
   - [Kubernetes](#kubernetes)
     - [Install Redis Enterprise](#install-redis-enterprise-k8s)
     - [Add Redisinsights](#add-redisinsights)
     - [Deploy application](#deploy-redis-searchstock-on-kubernetes)
+  - [Run Java on Unix](#run-local-java)
   - [Use the Application](#use-the-application)
+    - [Test Connection Loop](#test-connection-loop)
   - [Test Password Rotation](#test-password-rotation)
 - [Cleaning up](#cleaning-up)
 
@@ -75,15 +75,22 @@ The java code demonstrates common API actions with the data layer in REDIS.  The
 ```bash
 git clone https://github.com/jphaugla/redisResilience
 ```
-### Docker Compose Startup
+
+### Multiple options for creating the environment:
+* run with docker-compose using a flask and redis container
+* installing for mac os
+* running on linux (probably in the cloud)
+* running on kubernetes (example uses GKE)
+
+### Docker Compose
 * Open terminal and change to the github home where you will see the docker-compose.yml file
   * If docker resources are limited, comment out nodes re2 and re4 in the docker compose file.
 ```bash
 docker-compose build
 docker-compose up -d
 ```
-### Setup Redis Enterprise Cluster and database
-NOTE:   There is a second docker-compose-consumer.yml file.   I was not able to get this to work to run the consumer under the same docker-compose setup.   Not sure if it is a resource issue on my mac or a network issue with the second yaml file.  For now, the consumer needs to be run outside of docker
+### Setup Redis Enterprise and DB
+NOTE:   There is a second docker-compose-consumer.yml file .   I was not able to get this to work to run the consumer under the same docker-compose setup.   Not sure if it is a resource issue on my mac or a network issue with the second yaml file.  For now, the consumer needs to be run outside of docker
 * Setup the redis enterprise cluster and create the active/active database
   * if docker resources are limited, comment out the lines for nodes re2 and re4
 ```bash
