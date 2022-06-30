@@ -297,7 +297,7 @@ Should return the second and not the third parameter
 * The api call is handled by the main API controller [controller/BankingController.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/controller/BankingController.java)
   * This api call uses the main service routine startRedisWrite from [service/BankService.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/service/BankService.java)
     * The bank service method is startRedisWrite.  
-    * startRedisWrite starts a write test loop using testTheWrite method from ![repository/RedisTemplateRepository.java](https://github.com/jphaugla/redisResilience/blob/main/src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
+    * startRedisWrite starts a write test loop using testTheWrite method from [repository/RedisTemplateRepository.java](https://github.com/jphaugla/redisResilience/blob/main/src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
   * uses an array element value, redisIndex, to write a test value to the active redis index
   * this array element index is the pointer in to the array of the redis connections
     * In this sample code, only two redis connections are coded.  This should be changed to an application property for number of redis active/active instances
