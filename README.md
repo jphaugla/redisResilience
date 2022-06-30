@@ -293,13 +293,13 @@ Should return the second and not the third parameter
 ## Documentation on Fail-over Code
 ### Starting the Fail-over loop
 * To test the failover code, use the API to [start the failover process](#test-connection-loop) and then [run test failover scenarios](#test-password-rotation)
-* The test loop is started by calling the scripts ![scripts/startConnectionLoop.sh](scripts/startConnectionLoop.sh)
+* The test loop is started by calling the scripts [scripts/startConnectionLoop.sh](https://github.com/jphaugla/redisResilience/scripts/startConnectionLoop.sh)
   * This shell scripts makes an api call to startConnect
-* The api call is handled by the main API controller ![controller/BankingController.java](src/main/java/com/jphaugla/controller/BankingController.java)
-  * This api call uses the main service routine startRedisWrite from ![service/BankService.java](src/main/java/com/jphaugla/service/BankService.java)
+* The api call is handled by the main API controller [controller/BankingController.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/controller/BankingController.java)
+  * This api call uses the main service routine startRedisWrite from [service/BankService.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/service/BankService.java)
     * The bank service method is startRedisWrite.  
-    * startRedisWrite starts a write test loop using testTheWrite method from ![repository/RedisTemplateRepository.java](src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
-* testTheWrite ![repository/RedisTemplateRepository.java](src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
+    * startRedisWrite starts a write test loop using testTheWrite method from ![repository/RedisTemplateRepository.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
+* testTheWrite [repository/RedisTemplateRepository.java](https://github.com/jphaugla/redisResilience/src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
   * uses an array element value, redisIndex, to write a test value to the active redis index
   * this array element index is the pointer in to the array of the redis connections
     * In this sample code, only two redis connections are coded.  This should be changed to an application property for number of redis active/active instances
