@@ -19,7 +19,7 @@ This code is derived from Digital Banking github using redistemplate. The focus 
   - [Use the Application](#use-the-application)
     - [Test Connection Loop](#test-connection-loop)
   - [Test Password Rotation](#test-password-rotation)
-  - [Documentation on Failover Logic](#documentation-on-fail-over-code)
+  - [Documentation on Failover Logic](#documentation-on-failover-code)
 - [Cleaning up](#cleaning-up)
 
 
@@ -290,8 +290,7 @@ docker-compose stop re2
 ```
 Should return the second and not the third parameter
 
-## Documentation on Fail-over Code
-### Starting the Fail-over loop
+## Documentation on Failover Code
 * To test the failover code, use the API to [start the failover process](#test-connection-loop) and then [run test failover scenarios](#test-password-rotation)
 * The test loop is started by calling the scripts [scripts/startConnectionLoop.sh](https://github.com/jphaugla/redisResilience/scripts/startConnectionLoop.sh)
   * This shell scripts makes an api call to startConnect
