@@ -14,11 +14,12 @@ This code is derived from Digital Banking github using redistemplate. The focus 
   - [Kubernetes](#kubernetes)
     - [Install Redis Enterprise](#install-redis-enterprise-k8s)
     - [Add Redisinsights](#add-redisinsights)
-    - [Deploy application](#deploy-redis-searchstock-on-kubernetes)
+    - [Deploy application](#deploy-redis-resilience-on-kubernetes)
   - [Run Java on Unix](#run-local-java)
   - [Use the Application](#use-the-application)
     - [Test Connection Loop](#test-connection-loop)
   - [Test Password Rotation](#test-password-rotation)
+  - [Documentation on Failover Logic](#documentation-on-fail-over-code)
 - [Cleaning up](#cleaning-up)
 
 
@@ -176,7 +177,7 @@ Also connect to the secondary database
 | name     | TargetDB                                  |
 | Username | (leave blank)                             |
 | Password | DrCh7J31 (from ./getDatabasepw.sh above)  |
-#### Deploy redis-searchstock on Kubernetes
+#### Deploy redis-resilience on Kubernetes
 
 * must [log into docker](https://docs.docker.com/engine/reference/commandline/login/) to have access to the docker image
 ```bash
@@ -192,14 +193,14 @@ docker login
 cd k8s
 kubectl apply -f configmap.yaml
 ```
-* deploy the redis-searchstock
+* deploy the redis-resilience
 ```bash
-kubectl apply -f stock.yml
+kubectl apply -f resilience.yaml
 ```
 * port forward and continue with testing of the APIs
   * NOTE:  get exact name use ```kubectl get pods```
 ```bash
-kubectl port-forward redis-searchstock-c568d9b6b-z2mnf 5000
+kubectl port-forward redis-resilience-c568d9b6b-z2mnf 5000
 ```
 
 ## Run local Java
@@ -288,3 +289,24 @@ docker-compose stop re2
 ./getPassword.sh
 ```
 Should return the second and not the third parameter
+
+## Documentation on Fail-over Code
+### Starting the Fail-over loop
+* To test the failover code, use the API to [start the failover process](#test-connection-loop) and then [run test failover scenarios](#test-password-rotation)
+* The test loop is started by calling the scripts ![scripts/startConnectionLoop.sh](scripts/startConnectionLoop.sh)
+  * This shell scripts makes an api call to startConnect
+* The api call is handled by the main API controller ![controller/BankingController.java](src/main/java/com/jphaugla/controller/BankingController.java)
+  * This api call uses the main service routine startRedisWrite from ![service/BankService.java](src/main/java/com/jphaugla/service/BankService.java)
+    * The bank service method is startRedisWrite.  
+    * startRedisWrite starts a write test loop using testTheWrite method from ![repository/RedisTemplateRepository.java](src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
+* testTheWrite ![repository/RedisTemplateRepository.java](src/main/java/com/jphaugla/repository/RedisTemplateRepository.java)
+  * uses an array element value, redisIndex, to write a test value to the active redis index
+  * this array element index is the pointer in to the array of the redis connections
+    * In this sample code, only two redis connections are coded.  This should be changed to an application property for number of redis active/active instances
+  * the call to testTheWrite is decorated with a resilience4j circuit breaker annotation.
+    * This decoration introduces the resilience4j circuit breaker logic-the key is the call back routine.
+      * Anytime the write to the active database fails, the callback routine will be called
+      * In the callback routine, the exception is checked.  The callback routine will not initiate the failover unless the exception is circuit breaker open
+      * If it is circuit breaker open, the redisIndex will be switched to the other database
+      * Wait interval will be increased so don't get in infinite failover loop
+  * The actual application writes are not part of the circuit breaker logic.  The application code has a resilience4j retry decoration and uses the redisIndex to connect to the appropriate redis instance

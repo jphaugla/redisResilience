@@ -65,6 +65,7 @@ public class RedisTemplateRepository {
 	private RedisTemplate<Object, Object>[] redisTemplateWriteArray;
 	private StringRedisTemplate[] redisTemplateReadArray;
 
+	//  redisIndex is which is the currently active redis connection
 	private int redisIndex;
 
 	private String key1 = "key1";
