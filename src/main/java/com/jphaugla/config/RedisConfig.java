@@ -91,7 +91,8 @@ public class RedisConfig {
     public LettuceConnectionFactory redisConnectionFactory2() {
         RedisStandaloneConfiguration redisServerConf2 = new RedisStandaloneConfiguration();
         redisServerConf2.setHostName(env.getProperty("spring.redis.host2"));
-        redisServerConf2.setPort(Integer.parseInt("6380"));
+        redisServerConf2.setPort(Integer.parseInt(env.getProperty("spring.redis.port2")));
+        redisServerConf2.setPassword(RedisPassword.of(env.getProperty("spring.redis.password2")));
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
                 .commandTimeout(redisCommandTimeout).build();
         return new LettuceConnectionFactory(redisServerConf2,clientConfig);

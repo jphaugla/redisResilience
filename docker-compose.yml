@@ -95,10 +95,10 @@ services:
       re_cluster:
         ipv4_address: 172.22.0.20
 
-  bankapp:
-    image: bankapp
+  resilience:
+    image: resilience
     # image: jphaugla/bankapp:latest
-    container_name: bankapp
+    container_name: resilience
     build:
       context: .
       dockerfile: Dockerfile
@@ -111,6 +111,8 @@ services:
       - REDIS_HOST2=cluster-2.redis-enterprise.com
       - REDIS_PORT1=12000
       - REDIS_PORT2=12000
+      - REDIS_PASSWORD=redis123
+      - REDIS_PASSWORD2=redis123
       - CORE_POOLSIZE=20
     depends_on:
       - re1

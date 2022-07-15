@@ -63,6 +63,8 @@ spring:
         host2: ${REDIS_HOST2}
         port: ${REDIS_PORT1}
         port2: ${REDIS_PORT2}
+        password: ${REDIS_PASSWORD}
+        password2: ${REDIS_PASSWORD2}
         timeout: 1000ms
         testkey: testKey
         connectionLoopInterval: 1000
