@@ -4,7 +4,6 @@ services:
   #Node 1
   re1:
     image: redislabs/redis:latest
-    #image: redislabs/redis-internal:100.0.2-6840
     container_name: re1
     restart: unless-stopped
     tty: true
@@ -24,7 +23,6 @@ services:
   #Node 2
 #  re2:
 #    image: redislabs/redis:latest
-#    #image: redislabs/redis-internal:100.0.2-6840
 #    container_name: re2
 #    restart: unless-stopped
 #    tty: true
@@ -44,7 +42,6 @@ services:
   #Node 3
   re3:
     image: redislabs/redis:latest
-    #image: redislabs/redis-internal:100.0.2-6840
     container_name: re3
     restart: unless-stopped
     tty: true

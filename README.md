@@ -91,15 +91,14 @@ docker-compose build
 docker-compose up -d
 ```
 ### Setup Redis Enterprise and DB
-NOTE:   There is a second docker-compose-consumer.yml file .   I was not able to get this to work to run the consumer under the same docker-compose setup.   Not sure if it is a resource issue on my mac or a network issue with the second yaml file.  For now, the consumer needs to be run outside of docker
+NOTE:   There is a second docker-compose-consumer.yml file setup for testing an active/active password rotation.   I was not able to get this to work to run the consumer under the same docker-compose setup.   Not sure if it is a resource issue on my mac or a network issue with the second yaml file.  For now, the consumer needs to be run outside of docker
 * Setup the redis enterprise cluster and create the active/active database
   * if docker resources are limited, comment out the lines for nodes re2 and re4
 ```bash
 ./setup-2AA.sh
 ./crdcreate.sh
 ```
-* bringing up the docker compose will attempt to start the java container called resilience.  However, this may fail because the database was not yet created.
-* restart the bankapp and it should work now that cluster is created and database is created
+* bringing up the docker compose will start the java container called resilience.  If this container fails, restart the application
 ```bash
 docker-compose start resilience
 ```
@@ -228,15 +227,15 @@ Done%
 ```bash
 ./startConnectionLoop.sh
 ```
-* Now do each of these relatively quickly so, the failover completes before the retry is expired on the write. 
+* Now do each of these relatively quickly so, the failover completes before the retry is expired on the write.   
 ```bash
-docker stop re1
-./saveCustomer.sh
+docker network disconnect redisresilience_re_cluster re1
+./putCustomer.sh
 ```
 NOTE:   Because redis1 stopped, the circuit breaker will kick in on the failure of the write to redis in the connection loop.  This will call the circuit breaker to go to its callback routine.  This callback routine will do a failover once the circuit break opens.  At the same time, the client write will retry until successful or maximum retries occur
 * re-start redis1
 ```bash
-docker start re1
+docker network connect redisresilience_re_cluster --ip 172.22.0.11 re1
 ```
 * switch back is a manual process
 ```bash
